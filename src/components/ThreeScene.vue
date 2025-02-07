@@ -29,7 +29,7 @@ function getDefaultTexture() {
   canvas.width = 512
   canvas.height = 512
   const context = canvas.getContext('2d')
-  context.fillStyle = '#808080'
+  context.fillStyle = 'gray'
   context.fillRect(0, 0, canvas.width, canvas.height)
   return new THREE.CanvasTexture(canvas)
 }
@@ -70,15 +70,32 @@ function executeUserCode(code) {
   try {
     if (window.cv) {
       if (code.trim()) {
-        window.processFrame = new Function('frame', 'cv', 'drone', `
-          try {
-            ${code}
-            return frame;
-          } catch (error) {
-            console.error('代码执行错误:', error);
-            return frame;
-          }
-        `)
+        // 先执行一次性的代码
+        const oneTimeCode = new Function('cv', 'drone', code);
+        oneTimeCode(window.cv, drone);
+        
+        // 如果代码中包含processFrame函数定义，则设置为每帧处理函数
+        if (code.includes('function processFrame')) {
+          window.processFrame = new Function('frame', 'cv', 'drone', `
+            try {
+              ${code}
+              return processFrame(frame, cv, drone);
+            } catch (error) {
+              console.error('代码执行错误:', error);
+              return frame;
+            }
+          `);
+        } else {
+          // 如果没有processFrame函数定义，则只处理图像
+          window.processFrame = new Function('frame', 'cv', 'drone', `
+            try {
+              return frame;
+            } catch (error) {
+              console.error('代码执行错误:', error);
+              return frame;
+            }
+          `);
+        }
       }
     } else {
       console.error('OpenCV.js 尚未加载完成')
@@ -137,16 +154,30 @@ onMounted(() => {
   // 初始化无人机
   drone = new Drone(scene)
   if (bottomCameraContainer.value) {
-    bottomCameraContainer.value.appendChild(drone.getBottomCameraElement())
+    // 等待无人机摄像头加载完成后附加摄像头元素
+    const tryAttachBottomCamera = () => {
+      const camEl = drone.getBottomCameraElement();
+      if (camEl && !bottomCameraContainer.value.contains(camEl)) {
+        bottomCameraContainer.value.appendChild(camEl);
+      } else {
+        setTimeout(tryAttachBottomCamera, 100);
+      }
+    }
+    tryAttachBottomCamera();
   }
+
+  // 初始化 Clock 用于获取 delta 时间
+  const clock = new THREE.Clock();
 
   // 动画循环
   const animate = () => {
     requestAnimationFrame(animate)
+    const delta = clock.getDelta();
     controls.update()
     if (drone) {
-      drone.update()
-      drone.renderBottomCamera()
+      drone.update(delta)       // 更新运动和动画
+      drone.updateCamera()      // 更新摄像头位置
+      drone.renderCamera()      // 渲染摄像头视角
       if (window.cv && window.processFrame) {
         try {
           const canvas = drone.getBottomCameraImage()
