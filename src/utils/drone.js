@@ -35,7 +35,8 @@ export class Drone {
                 // 调整模型大小
                 this.model.scale.set(1, 1, 1);
                 // 调整模型位置
-                this.model.position.set(0, 0.5, 2);
+                this.model.position.set(0, 0.5, 0.5);
+                this.model.rotation.y = -Math.PI / 2
                 // 添加到场景
                 this.scene.add(this.model);
 
