@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, watch, defineExpose, defineProps, defineEmits } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
@@ -45,16 +45,16 @@ function updateGroundGeometry() {
 // 处理图片上传，更新顶面的纹理；同时根据图片比例计算并通知上层更新 groundWidth
 function handleImageUpload(file) {
   const reader = new FileReader()
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     const imageUrl = e.target.result
     const loader = new THREE.TextureLoader()
-    loader.load(imageUrl, function(texture) {
+    loader.load(imageUrl, function (texture) {
       texture.needsUpdate = true
       groundMaterial.map = texture
       groundMaterial.needsUpdate = true
     })
     const img = new Image()
-    img.onload = function() {
+    img.onload = function () {
       const aspect = img.naturalWidth / img.naturalHeight
       // 根据当前 groundDepth 计算新的宽度，并通过事件通知父组件
       emit('update-ground-dimensions', { groundWidth: props.groundDepth * aspect })
@@ -65,43 +65,32 @@ function handleImageUpload(file) {
   reader.readAsDataURL(file)
 }
 
-// 执行用户代码，将代码编译为新函数并保存到 window.processFrame
+// 修改后的 executeUserCode 函数
 function executeUserCode(code) {
   try {
-    if (window.cv) {
-      if (code.trim()) {
-        // 先执行一次性的代码
-        const oneTimeCode = new Function('cv', 'drone', code);
-        oneTimeCode(window.cv, drone);
-        
-        // 如果代码中包含processFrame函数定义，则设置为每帧处理函数
-        if (code.includes('function processFrame')) {
-          window.processFrame = new Function('frame', 'cv', 'drone', `
-            try {
+    if (code.trim()) {
+      window.processFrame = new Function('frame', 'cv', 'drone', `
+          try {
+            const result = (function() {
               ${code}
-              return processFrame(frame, cv, drone);
-            } catch (error) {
-              console.error('代码执行错误:', error);
-              return frame;
+            })();
+            // 用户代码应返回一个数组：[运动命令, 图像]
+            if (Array.isArray(result) && result.length === 2) {
+              return result;
+            } else {
+              // 默认返回悬停命令和原始帧
+              return [{ hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) }, frame];
             }
-          `);
-        } else {
-          // 如果没有processFrame函数定义，则只处理图像
-          window.processFrame = new Function('frame', 'cv', 'drone', `
-            try {
-              return frame;
-            } catch (error) {
-              console.error('代码执行错误:', error);
-              return frame;
-            }
-          `);
-        }
-      }
+          } catch (error) {
+            console.error('代码执行错误:', error);
+            return [{ hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) }, frame];
+          }
+        `);
     } else {
-      console.error('OpenCV.js 尚未加载完成')
+      console.error('未成功运行');
     }
   } catch (error) {
-    console.error('代码执行错误:', error)
+    console.error('代码执行错误:', error);
   }
 }
 
@@ -174,23 +163,37 @@ onMounted(() => {
     requestAnimationFrame(animate)
     const delta = clock.getDelta();
     controls.update()
+    // 更新无人机
     if (drone) {
-      drone.update(delta)       // 更新运动和动画
-      drone.updateCamera()      // 更新摄像头位置
-      drone.renderCamera()      // 渲染摄像头视角
-      if (window.cv && window.processFrame) {
-        try {
-          const canvas = drone.getBottomCameraImage()
-          const frame = cv.imread(canvas)
-          const processedFrame = window.processFrame(frame, cv, drone)
-          cv.customImshow(processedFrame)
-          if (processedFrame !== frame) {
-            processedFrame.delete()
-          }
-          frame.delete()
-        } catch (error) {
-          console.error('图像处理错误:', error)
+      drone.update(delta)
+      drone.updateCamera()
+      drone.renderCamera()
+    }
+    // 处理图像和运动指令
+    if (window.cv && window.processFrame) {
+      try {
+        const canvas = drone.getBottomCameraImage()
+        const frame = cv.imread(canvas)
+        const result = window.processFrame(frame, cv, drone)
+        let movementCommand, processedFrame;
+        if (Array.isArray(result) && result.length === 2) {
+          [movementCommand, processedFrame] = result;
+        } else {
+          movementCommand = { hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) };
+          processedFrame = frame;
         }
+        // 将运动命令应用到无人机
+        if (drone && drone.movement && drone.movement.setMovementCommand) {
+          drone.movement.setMovementCommand(movementCommand);
+        }
+        cv.customImshow(processedFrame)
+
+        if (processedFrame !== frame) {
+          processedFrame.delete()
+        }
+        frame.delete()
+      } catch (error) {
+        console.error('图像处理错误:', error)
       }
     }
     renderer.render(scene, camera)
@@ -201,7 +204,7 @@ onMounted(() => {
 })
 
 function setupOpenCVImshow() {
-  window.cv.customImshow = function(mat) {
+  window.cv.customImshow = function (mat) {
     const canvas = document.createElement('canvas')
     canvas.style.width = '100%'
     canvas.style.height = '100%'
@@ -253,6 +256,7 @@ defineExpose({
   width: 100%;
   height: 80vh;
 }
+
 .scene-container {
   width: 100%;
   height: 100%;
@@ -260,6 +264,7 @@ defineExpose({
   border: 5px solid #4eaed0;
   border-radius: 4px;
 }
+
 .bottom-camera-container {
   position: absolute;
   top: 20px;
@@ -272,6 +277,7 @@ defineExpose({
   border: 2px solid #4eaed0;
   z-index: 10;
 }
+
 .cv-output-container {
   position: absolute;
   top: 20px;
@@ -285,4 +291,4 @@ defineExpose({
   z-index: 10;
   background-color: #000;
 }
-</style> 
+</style>

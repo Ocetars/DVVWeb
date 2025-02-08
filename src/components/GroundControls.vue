@@ -1,6 +1,6 @@
 <!-- GroundControls 的工作只是收集用户的输入，然后通过事件传递给父组件或 ThreeScene，让 ThreeScene 根据最新的参数更新场景。 -->
 <script setup>
-import { defineProps, defineEmits, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   groundWidth: {

@@ -1,19 +1,64 @@
 import { DroneMovement } from './DroneMovement.js';
 import { DroneCamera } from './DroneCamera.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export class Drone {
     constructor(scene) {
         this.scene = scene;
-        this.movement = new DroneMovement(scene);
-        this.camera = null; // 待无人机模型加载完成后初始化
+        this.movement = new DroneMovement();
+        this.camera = null;
+        this.loadModel();
     }
 
-    // 在 ThreeScene 的动画循环中调用，传入 delta 时间
+    loadModel() {
+        const loader = new GLTFLoader();
+        loader.load(
+            '/dji_phantom_4_animation/scene.gltf',
+            (gltf) => {
+                const model = gltf.scene;
+                // 调整模型大小和位置
+                model.scale.set(1, 1, 1);
+                model.position.set(0, 0.5, 0.5);
+                model.rotation.y = -Math.PI / 2;
+                this.scene.add(model);
+
+                // 将加载的模型设置给运动控制模块
+                this.movement.setModel(model);
+
+                // 创建摄像头模块（仅创建一次）
+                if (!this.camera) {
+                    this.camera = new DroneCamera(this.scene, model);
+                }
+
+                // 设置动画
+                this.mixer = new THREE.AnimationMixer(model);
+                const animations = gltf.animations;
+                if (animations.length > 0) {
+                    animations.forEach(clip => {
+                        const action = this.mixer.clipAction(clip);
+                        action.setDuration(1);
+                        action.timeScale = 1.5;
+                        action.play();
+                        console.log('播放动画:', clip.name);
+                    });
+                }
+                console.log('动画列表:', animations);
+            },
+            (progress) => {
+                console.log('加载进度:', (progress.loaded / progress.total * 100) + '%');
+            },
+            (error) => {
+                console.error('模型加载出错:', error);
+            }
+        );
+    }
+
+    // 在动画循环中调用，传入 delta 时间
     update(delta) {
         this.movement.update(delta);
-        // 当无人机模型加载成功后，创建摄像头模块（仅创建一次）
-        if (this.movement.model && !this.camera) {
-            this.camera = new DroneCamera(this.scene, this.movement.model);
+        if (this.mixer) {
+            this.mixer.update(delta);
         }
     }
 
@@ -29,33 +74,16 @@ export class Drone {
         }
     }
 
-    // 运动控制接口，均委托给 DroneMovement
-    moveForward(speedFactor = 1, duration = 0) {
-        this.movement.moveForward(speedFactor, duration);
-    }
-
-    moveBackward(speedFactor = 1, duration = 0) {
-        this.movement.moveBackward(speedFactor, duration);
-    }
-
-    moveLeft(speedFactor = 1, duration = 0) {
-        this.movement.moveLeft(speedFactor, duration);
-    }
-
-    moveRight(speedFactor = 1, duration = 0) {
-        this.movement.moveRight(speedFactor, duration);
-    }
-
-    moveUp(speedFactor = 1, duration = 0) {
-        this.movement.moveUp(speedFactor, duration);
-    }
-
-    moveDown(speedFactor = 1, duration = 0) {
-        this.movement.moveDown(speedFactor, duration);
-    }
-
-    stop() {
-        this.movement.stop();
+    // 新增方法：设置悬停（当前运动命令置为悬停）
+    hover() {
+        if (this.movement && this.movement.model) {
+            this.movement.setMovementCommand({
+                hover: true,
+                angle: 0,
+                speed: 0,
+                altitude: this.movement.model.position.y
+            });
+        }
     }
 
     // 摄像头相关接口，委托给 DroneCamera
