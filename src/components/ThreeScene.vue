@@ -3,6 +3,7 @@ import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
+import { Ground } from '@/components/utils/Ground.js'
 
 const props = defineProps({
   groundWidth: {
@@ -21,48 +22,44 @@ const bottomCameraContainer = ref(null)
 const cvOutputContainer = ref(null)
 
 let scene, camera, renderer, controls, drone
-let groundMesh, groundMaterial
-
-// 获取默认灰色纹理（用于无图片上传时）
-function getDefaultTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 512
-  canvas.height = 512
-  const context = canvas.getContext('2d')
-  context.fillStyle = 'gray'
-  context.fillRect(0, 0, canvas.width, canvas.height)
-  return new THREE.CanvasTexture(canvas)
-}
+let ground
 
 // 更新地面几何体（使用 props 中的 groundWidth、groundDepth）
 function updateGroundGeometry() {
-  if (groundMesh) {
-    groundMesh.geometry.dispose()
-    groundMesh.geometry = new THREE.BoxGeometry(props.groundWidth, 0.1, props.groundDepth)
+  if (ground) {
+    ground.updateGeometry(props.groundWidth, props.groundDepth)
   }
 }
 
 // 处理图片上传，更新顶面的纹理；同时根据图片比例计算并通知上层更新 groundWidth
 function handleImageUpload(file) {
-  const reader = new FileReader()
-  reader.onload = function (e) {
-    const imageUrl = e.target.result
-    const loader = new THREE.TextureLoader()
-    loader.load(imageUrl, function (texture) {
-      texture.needsUpdate = true
-      groundMaterial.map = texture
-      groundMaterial.needsUpdate = true
-    })
-    const img = new Image()
-    img.onload = function () {
-      const aspect = img.naturalWidth / img.naturalHeight
+  if (ground) {
+    ground.handleImageUpload(file, (aspect) => {
       // 根据当前 groundDepth 计算新的宽度，并通过事件通知父组件
       emit('update-ground-dimensions', { groundWidth: props.groundDepth * aspect })
       updateGroundGeometry()
-    }
-    img.src = imageUrl
+    })
   }
-  reader.readAsDataURL(file)
+}
+
+function setupOpenCVImshow() {
+  window.cv.customImshow = function (mat) {
+    const canvas = document.createElement('canvas')
+    canvas.style.width = '100%'
+    canvas.style.height = '100%'
+    const containerDom = cvOutputContainer.value
+    while (containerDom.firstChild) {
+      containerDom.removeChild(containerDom.firstChild)
+    }
+    containerDom.appendChild(canvas)
+    cv.imshow(canvas, mat)
+  }
+}
+
+function handleResize() {
+  camera.aspect = container.value.clientWidth / container.value.clientHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(container.value.clientWidth, container.value.clientHeight)
 }
 
 // 修改后的 executeUserCode 函数
@@ -116,25 +113,19 @@ onMounted(() => {
   controls.enableDamping = true
   controls.dampingFactor = 0.05
 
-  // 创建地面
-  const groundGeometry = new THREE.BoxGeometry(props.groundWidth, 0.1, props.groundDepth)
-  const materials = [
-    new THREE.MeshPhongMaterial({ color: 0x808080 }), // right
-    new THREE.MeshPhongMaterial({ color: 0x808080 }), // left
-    new THREE.MeshPhongMaterial({ map: getDefaultTexture() }), // top
-    new THREE.MeshPhongMaterial({ color: 0x808080 }), // bottom
-    new THREE.MeshPhongMaterial({ color: 0x808080 }), // front
-    new THREE.MeshPhongMaterial({ color: 0x808080 })  // back
-  ]
-  groundMesh = new THREE.Mesh(groundGeometry, materials)
-  groundMaterial = materials[2]
-  scene.add(groundMesh)
-
   // 添加灯光
-  scene.add(new THREE.AmbientLight(0x404040))
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+  // 增加环境光强度，使用白色
+  scene.add(new THREE.AmbientLight(0xffffff, 1.5))
+  
+  // 调整平行光
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5)
   directionalLight.position.set(5, 5, 5)
   scene.add(directionalLight)
+  
+  // 添加第二个平行光来填充阴影
+  // const fillLight = new THREE.DirectionalLight(0xffffff, 0.3)
+  // fillLight.position.set(-5, 5, -5)
+  // scene.add(fillLight)
 
   // 设置相机位置
   camera.position.set(0, 1, 2.3)
@@ -157,6 +148,9 @@ onMounted(() => {
 
   // 初始化 Clock 用于获取 delta 时间
   const clock = new THREE.Clock();
+
+  // 删除原有的地面创建代码，替换为使用 Ground 类
+  ground = new Ground(scene, props.groundWidth, props.groundDepth)
 
   // 动画循环
   const animate = () => {
@@ -202,26 +196,6 @@ onMounted(() => {
 
   window.addEventListener('resize', handleResize)
 })
-
-function setupOpenCVImshow() {
-  window.cv.customImshow = function (mat) {
-    const canvas = document.createElement('canvas')
-    canvas.style.width = '100%'
-    canvas.style.height = '100%'
-    const containerDom = cvOutputContainer.value
-    while (containerDom.firstChild) {
-      containerDom.removeChild(containerDom.firstChild)
-    }
-    containerDom.appendChild(canvas)
-    cv.imshow(canvas, mat)
-  }
-}
-
-function handleResize() {
-  camera.aspect = container.value.clientWidth / container.value.clientHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(container.value.clientWidth, container.value.clientHeight)
-}
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)

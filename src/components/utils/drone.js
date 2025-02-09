@@ -21,6 +21,25 @@ export class Drone {
                 model.scale.set(1, 1, 1);
                 model.position.set(0, 0.5, 0.5);
                 model.rotation.y = -Math.PI / 2;
+
+                // 调整模型颜色为灰色
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        if (child.material) {
+                            // 如果是单个材质
+                            if (!Array.isArray(child.material)) {
+                                child.material.color.setHex(0xA0A0A0); // 设置为中灰色
+                            } 
+                            // 如果是材质数组
+                            else {
+                                child.material.forEach(mat => {
+                                    mat.color.setHex(0xA0A0A0);
+                                });
+                            }
+                        }
+                    }
+                });
+
                 this.scene.add(model);
 
                 // 将加载的模型设置给运动控制模块

@@ -1,0 +1,82 @@
+import * as THREE from 'three';
+
+export class Ground {
+  constructor(scene, width = 2, depth = 2) {
+    this.scene = scene;
+    this.width = width;
+    this.depth = depth;
+    this.mesh = null;
+    this.materials = null;
+    this.topMaterial = null;
+    
+    this.init();
+  }
+
+  // 获取默认灰色纹理
+  getDefaultTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  init() {
+    const groundGeometry = new THREE.BoxGeometry(this.width, 0.1, this.depth);
+    this.materials = [
+      new THREE.MeshPhongMaterial({ color: 0x808080 }), // right
+      new THREE.MeshPhongMaterial({ color: 0x808080 }), // left
+      new THREE.MeshPhongMaterial({ map: this.getDefaultTexture() }), // top
+      new THREE.MeshPhongMaterial({ color: 0x808080 }), // bottom
+      new THREE.MeshPhongMaterial({ color: 0x808080 }), // front
+      new THREE.MeshPhongMaterial({ color: 0x808080 })  // back
+    ];
+
+    this.mesh = new THREE.Mesh(groundGeometry, this.materials);
+    this.topMaterial = this.materials[2];
+    this.scene.add(this.mesh);
+  }
+
+  // 更新地面几何体
+  updateGeometry(width, depth) {
+    this.width = width;
+    this.depth = depth;
+    if (this.mesh) {
+      this.mesh.geometry.dispose();
+      this.mesh.geometry = new THREE.BoxGeometry(width, 0.1, depth);
+    }
+  }
+
+  // 更新顶面纹理
+  updateTexture(texture) {
+    if (this.topMaterial) {
+      this.topMaterial.map = texture;
+      this.topMaterial.needsUpdate = true;
+    }
+  }
+
+  // 处理图片上传
+  handleImageUpload(file, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const imageUrl = e.target.result;
+      const loader = new THREE.TextureLoader();
+      loader.load(imageUrl, (texture) => {
+        texture.needsUpdate = true;
+        this.updateTexture(texture);
+      });
+
+      const img = new Image();
+      img.onload = () => {
+        const aspect = img.naturalWidth / img.naturalHeight;
+        if (callback) {
+          callback(aspect);
+        }
+      };
+      img.src = imageUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+} 
