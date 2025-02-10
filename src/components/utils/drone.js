@@ -19,7 +19,7 @@ export class Drone {
                 const model = gltf.scene;
                 // 调整模型大小和位置
                 model.scale.set(1, 1, 1);
-                model.position.set(0, 0.5, 0.5);
+                model.position.set(0, 0.05, 0.5);
                 model.rotation.y = -Math.PI / 2;
 
                 // 调整模型颜色为灰色

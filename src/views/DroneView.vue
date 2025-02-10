@@ -26,6 +26,13 @@ function onExecuteCode(code) {
 const updateGroundDimensions = (payload) => {
   groundWidth.value = payload.groundWidth
 }
+
+// 修改：直接调用 ThreeScene 的 enterCustomPositionMode 方法
+function enterCustomPositionMode() {
+    if (threeScene.value) {
+        threeScene.value.enterCustomPositionMode();
+    }
+}
 </script>
 
 <template>
@@ -50,6 +57,10 @@ const updateGroundDimensions = (payload) => {
       <!-- CodeEditor 执行代码时，通知 DroneView，再调用 ThreeScene 内部方法 -->
       <CodeEditor @execute-code="onExecuteCode" />
     </div>
+    <!-- 修改：按钮文字和点击事件 -->
+    <button @click="enterCustomPositionMode">
+        自定义无人机位置
+    </button>
   </div>
 </template>
 

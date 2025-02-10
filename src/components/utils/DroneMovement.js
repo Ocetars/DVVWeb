@@ -21,6 +21,15 @@ export class DroneMovement {
     this.command = command;
   }
 
+  // 新增：直接设置无人机位置
+  setPosition(x, y, z) {
+    if (this.model) {
+      this.model.position.x = x;
+      this.model.position.y = y;
+      this.model.position.z = z;
+    }
+  }
+
   // 在每帧调用，根据命令更新模型位置
   update(delta) {
     if (!this.model) return;

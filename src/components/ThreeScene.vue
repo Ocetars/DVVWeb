@@ -23,6 +23,8 @@ const cvOutputContainer = ref(null)
 
 let scene, camera, renderer, controls, drone
 let ground
+// 添加一个 ref 来控制自定义位置模式
+const isCustomPositionMode = ref(false)
 
 // 更新地面几何体（使用 props 中的 groundWidth、groundDepth）
 function updateGroundGeometry() {
@@ -60,6 +62,31 @@ function handleResize() {
   camera.aspect = container.value.clientWidth / container.value.clientHeight
   camera.updateProjectionMatrix()
   renderer.setSize(container.value.clientWidth, container.value.clientHeight)
+}
+
+// 新增：进入自定义位置模式
+function enterCustomPositionMode() {
+  isCustomPositionMode.value = true;
+}
+
+// 修改：处理地面点击事件
+function handleGroundClick(event) {
+  if (!isCustomPositionMode.value) return;
+
+  const rect = renderer.domElement.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+  const intersects = raycaster.intersectObject(ground.mesh);
+
+  if (intersects.length > 0) {
+    const point = intersects[0].point;
+    drone.movement.setPosition(point.x, 0.05, point.z);
+    // 退出自定义位置模式
+    isCustomPositionMode.value = false;
+  }
 }
 
 // 修改后的 executeUserCode 函数
@@ -116,12 +143,12 @@ onMounted(() => {
   // 添加灯光
   // 增加环境光强度，使用白色
   scene.add(new THREE.AmbientLight(0xffffff, 1.5))
-  
+
   // 调整平行光
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5)
   directionalLight.position.set(5, 5, 5)
   scene.add(directionalLight)
-  
+
   // 添加第二个平行光来填充阴影
   // const fillLight = new THREE.DirectionalLight(0xffffff, 0.3)
   // fillLight.position.set(-5, 5, -5)
@@ -164,7 +191,7 @@ onMounted(() => {
       drone.renderCamera()
     }
     // 处理图像和运动指令
-    if (window.cv && window.processFrame) {
+    if (window.cv && window.processFrame && !isCustomPositionMode.value) { // 自定义模式下停止图像处理
       try {
         const canvas = drone.getBottomCameraImage()
         const frame = cv.imread(canvas)
@@ -194,12 +221,17 @@ onMounted(() => {
   }
   animate()
 
+  // 添加地面点击事件监听器
+  renderer.domElement.addEventListener('click', handleGroundClick);
+
   window.addEventListener('resize', handleResize)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
   container.value.removeChild(renderer.domElement)
+  // 移除地面点击事件监听器
+  renderer.domElement.removeEventListener('click', handleGroundClick);
 })
 
 watch(() => props.groundWidth, () => {
@@ -212,7 +244,10 @@ watch(() => props.groundDepth, () => {
 defineExpose({
   updateGroundGeometry,
   handleImageUpload,
-  executeUserCode
+  executeUserCode,
+  // 暴露自定义位置模式状态
+  // isCustomPositionMode, // 不需要暴露状态变量
+  enterCustomPositionMode // 暴露进入自定义模式的方法
 })
 </script>
 
