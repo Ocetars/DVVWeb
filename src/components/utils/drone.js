@@ -19,7 +19,7 @@ export class Drone {
                 const model = gltf.scene;
                 // 调整模型大小和位置
                 model.scale.set(1, 1, 1);
-                model.position.set(0, 0.05, 0.5);
+                model.position.set(0, 0.05, 0);
                 model.rotation.y = -Math.PI / 2;
 
                 // 调整模型颜色为灰色
@@ -57,7 +57,7 @@ export class Drone {
                     animations.forEach(clip => {
                         const action = this.mixer.clipAction(clip);
                         action.setDuration(1);
-                        action.timeScale = 1.5;
+                        action.timeScale = 0;
                         action.play();
                         console.log('播放动画:', clip.name);
                     });
@@ -77,6 +77,15 @@ export class Drone {
     update(delta) {
         this.movement.update(delta);
         if (this.mixer) {
+            // 根据高度调整动画速度
+            if (this.movement && this.movement.model) {
+                const currentHeight = this.movement.model.position.y;
+                // 获取所有动画动作
+                this.mixer.time = 0; // 重置动画时间以确保平滑过渡
+                this.mixer._actions.forEach(action => {
+                    action.timeScale = currentHeight <= 0.05 ? 1 : 3;
+                });
+            }
             this.mixer.update(delta);
         }
     }

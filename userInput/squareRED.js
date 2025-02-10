@@ -91,9 +91,9 @@ if (maxContour) {
 
     const commands = [
         { hover: false, angle: 0, speed: 0.25, altitude: 1.0 },      // 向右
-        { hover: false, angle: Math.PI/2, speed: 0.25, altitude: 1.0 },  // 向前
+        { hover: false, angle: -Math.PI/2, speed: 0.25, altitude: 1.0 },  // 向前
         { hover: false, angle: Math.PI, speed: 0.25, altitude: 1.0 },    // 向左
-        { hover: false, angle: -Math.PI/2, speed: 0.25, altitude: 1.0 }  // 向后
+        { hover: false, angle: Math.PI/2, speed: 0.25, altitude: 1.0 }  // 向后
     ];
 
     clearMemory();
