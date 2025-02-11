@@ -52,11 +52,11 @@ function updateGround() {
     </label>
     <label>
       地面宽度：
-      <input type="number" v-model.number="localGroundWidth" @change="updateWidth" step="0.1" style="width: 80px;" />
+      <input type="number" v-model.number="localGroundWidth" @change="updateWidth" step="0.1" style="width: 60px;" />
     </label>
     <label>
       地面深度：
-      <input type="number" v-model.number="localGroundDepth" @change="updateDepth" step="0.1" style="width: 80px;" />
+      <input type="number" v-model.number="localGroundDepth" @change="updateDepth" step="0.1" style="width: 60px;" />
     </label>
     <button @click="updateGround">更新地面</button>
   </div>

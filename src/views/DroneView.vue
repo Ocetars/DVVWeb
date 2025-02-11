@@ -7,6 +7,7 @@ import CodeEditor from '@/components/CodeEditor.vue'
 const groundWidth = ref(2)
 const groundDepth = ref(2)
 const threeScene = ref(null)
+const cvOutputContainer = ref(null)
 
 function onUploadImage(file) {
   if(file){
@@ -33,6 +34,16 @@ function enterCustomPositionMode() {
         threeScene.value.enterCustomPositionMode();
     }
 }
+
+function handleCVOutput(canvas) {
+  const containerDom = cvOutputContainer.value
+  if (!containerDom) return
+  
+  while (containerDom.firstChild) {
+    containerDom.removeChild(containerDom.firstChild)
+  }
+  containerDom.appendChild(canvas)
+}
 </script>
 
 <template>
@@ -44,23 +55,27 @@ function enterCustomPositionMode() {
         :groundDepth="groundDepth" 
         ref="threeScene"
         @update-ground-dimensions="updateGroundDimensions"
+        @cv-output="handleCVOutput"
       />
-      <!-- GroundControls 通过 v-model 与父组件进行双向绑定，并通过事件回传文件和更新操作 -->
-      <GroundControls 
-        v-model:groundWidth="groundWidth" 
-        v-model:groundDepth="groundDepth"
-        @upload-image="onUploadImage" 
-        @update-ground="onUpdateGround" 
-      />
+      <div class="controls-container">
+        
+        <!-- GroundControls 通过 v-model 与父组件进行双向绑定，并通过事件回传文件和更新操作 -->
+        <GroundControls 
+          v-model:groundWidth="groundWidth" 
+          v-model:groundDepth="groundDepth"
+          @upload-image="onUploadImage" 
+          @update-ground="onUpdateGround" 
+        />
+      </div>
     </div>
     <div class="code-editor-container">
       <!-- CodeEditor 执行代码时，通知 DroneView，再调用 ThreeScene 内部方法 -->
       <CodeEditor @execute-code="onExecuteCode" />
+      <!-- 修改：按钮文字和点击事件 -->
+      <button @click="enterCustomPositionMode">自定义无人机位置</button>
+      <div ref="cvOutputContainer" class="cv-output-container"></div>
     </div>
-    <!-- 修改：按钮文字和点击事件 -->
-    <button @click="enterCustomPositionMode">
-        自定义无人机位置
-    </button>
+    
   </div>
 </template>
 
@@ -72,6 +87,21 @@ function enterCustomPositionMode() {
 }
 .main-content {
   width: 70vw;
+}
+.controls-container {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.cv-output-container {
+  width: 240px;
+  height: 240px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  border: 2px solid #4eaed0;
+  background-color: #000;
 }
 .code-editor-container {
   flex: 1;

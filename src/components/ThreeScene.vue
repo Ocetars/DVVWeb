@@ -15,11 +15,10 @@ const props = defineProps({
     default: 2
   }
 })
-const emit = defineEmits(['update-ground-dimensions'])
+const emit = defineEmits(['update-ground-dimensions', 'cv-output'])
 
 const container = ref(null)
 const bottomCameraContainer = ref(null)
-const cvOutputContainer = ref(null)
 
 let scene, camera, renderer, controls, drone
 let ground
@@ -49,11 +48,8 @@ function setupOpenCVImshow() {
     const canvas = document.createElement('canvas')
     canvas.style.width = '100%'
     canvas.style.height = '100%'
-    const containerDom = cvOutputContainer.value
-    while (containerDom.firstChild) {
-      containerDom.removeChild(containerDom.firstChild)
-    }
-    containerDom.appendChild(canvas)
+    // 触发事件，将 canvas 传递给父组件
+    emit('cv-output', canvas)
     cv.imshow(canvas, mat)
   }
 }
@@ -254,8 +250,7 @@ defineExpose({
 <template>
   <div class="scene-container-relative">
     <div ref="container" class="scene-container"></div>
-    <div ref="bottomCameraContainer" class="bottom-camera-container"></div>
-    <div ref="cvOutputContainer" class="cv-output-container"></div>
+    <!-- <div ref="bottomCameraContainer" class="bottom-camera-container"></div> -->
   </div>
 </template>
 
@@ -285,19 +280,5 @@ defineExpose({
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   border: 2px solid #4eaed0;
   z-index: 10;
-}
-
-.cv-output-container {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 240px;
-  height: 240px;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  border: 2px solid #4eaed0;
-  z-index: 10;
-  background-color: #000;
 }
 </style>
