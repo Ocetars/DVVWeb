@@ -2,8 +2,6 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElButton, ElTooltip, ElButtonGroup, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 import { VideoPlay, Delete, ArrowDown } from '@element-plus/icons-vue'
-import * as monaco from 'monaco-editor'
-import { editor as monacoEditor } from 'monaco-editor'
 import loader from '@monaco-editor/loader'
 
 const emit = defineEmits(['execute-code'])
@@ -21,8 +19,9 @@ async function loadExampleFromFile(filename) {
     }
     const content = await response.text()
     if (codeEditor) {
-      codeEditor.setValue(content)
+      codeEditor.setValue(content)  
       code.value = content
+      ElMessage.success('已加载示例代码')
     }
   } catch (error) {
     ElMessage.error('加载示例代码失败')
@@ -66,9 +65,9 @@ onMounted(() => {
       minimap: {
         enabled: false,
       },
-      fontSize: 18,
+      fontSize: 20,
       fontFamily: 'Fira Code, monospace',
-      lineHeight: 24,
+      lineHeight: 26,
     })
 
     codeEditor.onDidChangeModelContent(() => {
@@ -94,36 +93,32 @@ watch(code, (newValue) => {
 <template>
   <div class="code-editor-container">
     <div class="toolbar">
-      <el-button-group>
-        <el-tooltip content="执行代码" placement="top">
+        <el-button-group>
           <el-button type="primary" @click="execute">
             <el-icon><VideoPlay /></el-icon>
-            执行
+            <span class="button-text">执行</span>
           </el-button>
-        </el-tooltip>
-        <el-tooltip content="清空代码" placement="top">
           <el-button @click="clearCode">
             <el-icon><Delete /></el-icon>
-            清空
+            <span class="button-text">清空</span>
           </el-button>
-        </el-tooltip>
-      </el-button-group>
+        </el-button-group>
 
-      <el-dropdown @command="loadTemplate">
-        <el-button type="primary" plain>
-          加载示例
-          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-        </el-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item 
-              v-for="example in examples" 
-              :key="example.value"
-              :command="example.value"
-            >
-              {{ example.label }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
+        <el-dropdown @command="loadTemplate">
+          <el-button type="primary" plain>
+            加载示例
+            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item 
+                v-for="example in examples" 
+                :key="example.value"
+                :command="example.value"
+              >
+                {{ example.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
         </template>
       </el-dropdown>
     </div>
@@ -134,28 +129,57 @@ watch(code, (newValue) => {
 
 <style scoped>
 .code-editor-container {
-  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 16px;  
 }
 
 .toolbar {
   display: flex;
   gap: 16px;
   align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 5px;
+  margin-left: 70px;
+}
+
+.button-text {
+  margin-left: 4px;
 }
 
 .editor-container {
   flex: 1;
-  border: 2px solid #4eaed0;
-  border-radius: 4px;
 }
 
 :deep(.el-button) {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  background-color: #454545;
+  border-color: #454545;
+  color: white;
+}
+
+:deep(.el-button-group .el-button:first-child) {
+  background-color: #2b7d4d;
+  border-color: #2b7d4d;
+}
+
+:deep(.el-button-group .el-button:first-child:hover) {
+  background-color: #3a9463;
+  border-color: #3a9463;
+}
+
+:deep(.el-button:not(:first-child):hover) {
+  background-color: #666666;
+  border-color: #666666;
+  color: white;
+}
+
+:deep(.el-dropdown-menu__item:not(.is-disabled):focus),
+:deep(.el-dropdown-menu__item:not(.is-disabled):hover) {
+  background-color: #9c9c9c;
+  color: rgb(35, 35, 35);
+  transition: all 0.1s ease;
 }
 </style> 

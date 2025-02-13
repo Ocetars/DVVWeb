@@ -110,7 +110,7 @@ function handleCustomPosition() {
   gap: 15px;
   align-items: center;
   padding: 10px;
-  background-color: #f8f9fa;
+  background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -137,6 +137,10 @@ function handleCustomPosition() {
   width: 100px;
 }
 
+.position-btn {
+  white-space: nowrap;
+}
+
 :deep(.el-input-number) {
   width: 120px;
 }
@@ -149,14 +153,31 @@ function handleCustomPosition() {
   text-align: center;
 }
 
-.position-btn {
-  white-space: nowrap;
-}
-
 :deep(.el-divider--vertical) {
   height: 20px;
   margin: 0 5px;
 }
+
+:deep(.el-button--warning) {
+  background-color: #454545;
+  border-color: #454545;
+}
+
+:deep(.el-button--warning:hover) {
+  background-color: #666666;
+  border-color: #666666;
+}
+
+:deep(.el-button--primary) {
+  background-color: #454545;
+  border-color: #454545;
+}
+
+:deep(.el-button--primary:hover) {
+  background-color: #666666;
+  border-color: #666666;
+}
+
 
 /* 响应式设计 */
 @media (max-width: 768px) {
@@ -189,4 +210,5 @@ function handleCustomPosition() {
     min-width: 120px;
   }
 }
+
 </style> 

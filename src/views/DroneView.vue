@@ -127,7 +127,6 @@ function handleCVOutput(canvas) {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f5f7fa;
 }
 
 .footer {
@@ -154,7 +153,7 @@ function handleCVOutput(canvas) {
 .trigger-button {
   display: flex;
   align-items: center;
-  background: #409EFF;
+  background: #333333;
   padding: 8px 16px;
   border-radius: 0 0 16px 16px;
   cursor: pointer;
@@ -162,7 +161,7 @@ function handleCVOutput(canvas) {
 }
 
 .trigger-button:hover {
-  background: #66b1ff;
+  background: #666666;
   padding-top: 12px;
 }
 
@@ -186,15 +185,16 @@ function handleCVOutput(canvas) {
 
 /* 抽屉样式 */
 :deep(.el-drawer) {
-  background: #f5f7fa;
+  background: #1e1e1e;
 }
 
 :deep(.el-drawer__header) {
   margin-bottom: 0;
-  padding: 16px 20px;
-  border-bottom: 1px solid #dcdfe6;
-  background: #409EFF;
+  padding: 16px 70px;
+  background: #333333;
   color: white;
+  font-weight: 600;
+  text-align: center;
 }
 
 :deep(.el-drawer__close-btn) {
@@ -214,8 +214,8 @@ function handleCVOutput(canvas) {
   max-width: 240px;
   transition: all 0.3s ease;
   backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 2px solid #cfcccc;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 2px solid #e4e7ed;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 

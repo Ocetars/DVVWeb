@@ -258,7 +258,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border: 3px solid #4eaed0;
+  border: 3px solid #dcdfe6;
   border-radius: 4px;
 }
 </style>
