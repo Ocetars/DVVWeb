@@ -1,6 +1,8 @@
 <!-- GroundControls 的工作只是收集用户的输入，然后通过事件传递给父组件或 ThreeScene，让 ThreeScene 根据最新的参数更新场景。 -->
 <script setup>
 import { ref, watch } from 'vue'
+import { ElUpload, ElInput, ElButton, ElIcon, ElDivider } from 'element-plus'
+import { Upload, Refresh, Pointer } from '@element-plus/icons-vue'
 
 const props = defineProps({
   groundWidth: {
@@ -13,7 +15,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:groundWidth', 'update:groundDepth', 'upload-image', 'update-ground'])
+const emit = defineEmits(['update:groundWidth', 'update:groundDepth', 'upload-image', 'update-ground', 'custom-position'])
 
 const localGroundWidth = ref(props.groundWidth)
 const localGroundDepth = ref(props.groundDepth)
@@ -28,52 +30,163 @@ watch(() => props.groundDepth, (newVal) => {
 function updateWidth() {
   emit('update:groundWidth', Number(localGroundWidth.value))
 }
+
 function updateDepth() {
   emit('update:groundDepth', Number(localGroundDepth.value))
 }
 
-function onFileChange(event) {
-  const file = event.target.files[0]
-  if (file) {
-    emit('upload-image', file)
-  }
+function handleUpload(file) {
+  emit('upload-image', file.raw)
+  return false // 阻止自动上传
 }
 
-function updateGround() {
-  emit('update-ground')
+function handleCustomPosition() {
+  emit('custom-position')
 }
 </script>
 
 <template>
   <div class="ground-controls">
-    <label>
-      上传地面纹理：
-      <input type="file" @change="onFileChange" accept="image/*" />
-    </label>
-    <label>
-      地面宽度：
-      <input type="number" v-model.number="localGroundWidth" @change="updateWidth" step="0.1" style="width: 60px;" />
-    </label>
-    <label>
-      地面深度：
-      <input type="number" v-model.number="localGroundDepth" @change="updateDepth" step="0.1" style="width: 60px;" />
-    </label>
-    <button @click="updateGround">更新地面</button>
+    <el-upload
+      class="upload-area"
+      :auto-upload="false"
+      :show-file-list="false"
+      accept="image/*"
+      :on-change="handleUpload"
+    >
+      <el-button type="primary" :icon="Upload">
+        上传地面纹理
+      </el-button>
+    </el-upload>
+
+    <el-divider direction="vertical" />
+
+    <div class="dimension-controls">
+      <div class="input-group">
+        <span class="label">宽度</span>
+        <el-input
+          v-model.number="localGroundWidth"
+          type="number"
+          :step="0.1"
+          @change="updateWidth"
+          :min="0.1"
+          class="dimension-input"
+        >
+          <template #suffix>m</template>
+        </el-input>
+      </div>
+
+      <div class="input-group">
+        <span class="label">深度</span>
+        <el-input
+          v-model.number="localGroundDepth"
+          type="number"
+          :step="0.1"
+          @change="updateDepth"
+          :min="0.1"
+          class="dimension-input"
+        >
+          <template #suffix>m</template>
+        </el-input>
+      </div>
+    </div>
+
+    <el-divider direction="vertical" />
+
+    <el-button 
+      type="warning" 
+      :icon="Pointer"
+      @click="handleCustomPosition"
+      class="position-btn"
+    >
+      摆放无人机
+    </el-button>
   </div>
 </template>
 
 <style scoped>
 .ground-controls {
-  margin-top: 20px;
   display: flex;
-  gap: 10px;
+  gap: 15px;
   align-items: center;
-  flex-wrap: wrap;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-.ground-controls label {
-  display: flex;
 
+.dimension-controls {
+  display: flex;
+  gap: 15px;
   align-items: center;
-  gap: 5px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-size: 15px;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.dimension-input {
+  width: 100px;
+}
+
+:deep(.el-input-number) {
+  width: 120px;
+}
+
+:deep(.el-input__wrapper) {
+  padding: 0 8px;
+}
+
+:deep(.el-input__inner) {
+  text-align: center;
+}
+
+.position-btn {
+  white-space: nowrap;
+}
+
+:deep(.el-divider--vertical) {
+  height: 20px;
+  margin: 0 5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .ground-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  :deep(.el-divider--vertical) {
+    display: none;
+  }
+
+  .position-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .ground-controls {
+    padding: 8px;
+  }
+
+  .dimension-controls {
+    gap: 10px;
+  }
+
+  .input-group {
+    flex: 1;
+    min-width: 120px;
+  }
 }
 </style> 

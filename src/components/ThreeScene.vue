@@ -36,8 +36,10 @@ function updateGroundGeometry() {
 function handleImageUpload(file) {
   if (ground) {
     ground.handleImageUpload(file, (aspect) => {
+      // 将比例精确到小数点后两位
+      const roundedAspect = Math.round(aspect * 100) / 100
       // 根据当前 groundDepth 计算新的宽度，并通过事件通知父组件
-      emit('update-ground-dimensions', { groundWidth: props.groundDepth * aspect })
+      emit('update-ground-dimensions', { groundWidth: props.groundDepth * roundedAspect })
       updateGroundGeometry()
     })
   }
@@ -248,37 +250,15 @@ defineExpose({
 </script>
 
 <template>
-  <div class="scene-container-relative">
-    <div ref="container" class="scene-container"></div>
-    <!-- <div ref="bottomCameraContainer" class="bottom-camera-container"></div> -->
-  </div>
+  <div ref="container" class="scene-container"></div>
 </template>
 
 <style scoped>
-.scene-container-relative {
-  position: relative;
-  width: 100%;
-  height: 80vh;
-}
-
 .scene-container {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border: 5px solid #4eaed0;
+  border: 3px solid #4eaed0;
   border-radius: 4px;
-}
-
-.bottom-camera-container {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 240px;
-  height: 240px;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  border: 2px solid #4eaed0;
-  z-index: 10;
 }
 </style>

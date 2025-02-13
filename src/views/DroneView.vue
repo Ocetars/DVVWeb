@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { ElDrawer, ElTooltip, ElContainer, ElHeader, ElMain, ElFooter } from 'element-plus'
 import ThreeScene from '@/components/ThreeScene.vue'
 import GroundControls from '@/components/GroundControls.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -8,6 +9,9 @@ const groundWidth = ref(2)
 const groundDepth = ref(2)
 const threeScene = ref(null)
 const cvOutputContainer = ref(null)
+
+// 添加抽屉控制变量
+const drawerVisible = ref(false)
 
 function onUploadImage(file) {
   if(file){
@@ -47,66 +51,219 @@ function handleCVOutput(canvas) {
 </script>
 
 <template>
-  <div class="drone-view">
-    <div class="main-content">
-      <!-- ThreeScene 接收地面尺寸作为 props，并通过 ref 暴露内部方法 -->
-      <ThreeScene 
-        :groundWidth="groundWidth" 
-        :groundDepth="groundDepth" 
-        ref="threeScene"
-        @update-ground-dimensions="updateGroundDimensions"
-        @cv-output="handleCVOutput"
-      />
-      <div class="controls-container">
-        
-        <!-- GroundControls 通过 v-model 与父组件进行双向绑定，并通过事件回传文件和更新操作 -->
+  <el-container class="layout-container">
+    <el-header height="48px" class="header">
+      <div class="floating-trigger">
+        <el-tooltip
+          content="打开代码编辑器"
+          placement="bottom"
+          effect="dark"
+        >
+          <div class="trigger-button" @click="drawerVisible = true">
+            <el-icon class="code-icon"><EditPen /></el-icon>
+          </div>
+        </el-tooltip>
+      </div>
+    </el-header>
+
+    <el-main class="main-area">
+      <div class="scene-container-wrapper">
+        <ThreeScene 
+          :groundWidth="groundWidth" 
+          :groundDepth="groundDepth" 
+          ref="threeScene"
+          @update-ground-dimensions="updateGroundDimensions"
+          @cv-output="handleCVOutput"
+        />
+        <div ref="cvOutputContainer" class="floating-camera"></div>
+      </div>
+    </el-main>
+
+    <el-footer height="auto" class="footer">
+      <div class="footer-content">
         <GroundControls 
           v-model:groundWidth="groundWidth" 
           v-model:groundDepth="groundDepth"
           @upload-image="onUploadImage" 
-          @update-ground="onUpdateGround" 
+          @custom-position="enterCustomPositionMode"
         />
       </div>
-    </div>
-    <div class="code-editor-container">
-      <!-- CodeEditor 执行代码时，通知 DroneView，再调用 ThreeScene 内部方法 -->
+    </el-footer>
+
+    <!-- 代码编辑器抽屉 -->
+    <el-drawer
+      v-model="drawerVisible"
+      title="代码编辑器"
+      size="80%"
+      direction="ttb"
+    >
       <CodeEditor @execute-code="onExecuteCode" />
-      <!-- 修改：按钮文字和点击事件 -->
-      <button @click="enterCustomPositionMode">自定义无人机位置</button>
-      <div ref="cvOutputContainer" class="cv-output-container"></div>
-    </div>
-    
-  </div>
+    </el-drawer>
+  </el-container>
 </template>
 
 <style scoped>
-.drone-view {
+.layout-container {
+  height: 100vh;
   display: flex;
-  gap: 20px;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #fff;
+  border-bottom: 1px solid #dcdfe6;
+  position: relative;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-area {
+  flex: 1;
   padding: 20px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f7fa;
 }
-.main-content {
-  width: 70vw;
+
+.footer {
+  background-color: #fff;
+  padding: 20px;
+  border-top: 1px solid #dcdfe6;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
+
+.footer-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.floating-trigger {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.trigger-button {
+  display: flex;
+  align-items: center;
+  background: #409EFF;
+  padding: 8px 16px;
+  border-radius: 0 0 16px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.trigger-button:hover {
+  background: #66b1ff;
+  padding-top: 12px;
+}
+
+.code-icon {
+  font-size: 20px;
+  color: white;
+}
+
 .controls-container {
-  margin-top: 20px;
   display: flex;
   gap: 20px;
   align-items: flex-start;
+  margin-bottom: 20px;
 }
-.cv-output-container {
-  width: 240px;
-  height: 240px;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  border: 2px solid #4eaed0;
-  background-color: #000;
-}
-.code-editor-container {
-  flex: 1;
+
+.control-buttons {
   display: flex;
-  flex-direction: column;
   gap: 10px;
+  align-items: center;
+}
+
+/* 抽屉样式 */
+:deep(.el-drawer) {
+  background: #f5f7fa;
+}
+
+:deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dcdfe6;
+  background: #409EFF;
+  color: white;
+}
+
+:deep(.el-drawer__close-btn) {
+  color: white;
+}
+
+/* 添加浮动摄像头样式 */
+.floating-camera {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  width: 20vw;
+  height: auto;
+  aspect-ratio: 1;
+  min-width: 160px;
+  max-width: 240px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 2px solid #cfcccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 响应式样式统一管理 */
+@media (max-width: 1200px) {
+  .scene-container-wrapper {
+    width: 80vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .scene-container-wrapper {
+    width: 90vw;
+    height: 50vh;
+  }
+  
+  .floating-camera {
+    width: 30vw;
+    min-width: 120px;
+  }
+  
+  .footer-content {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scene-container-wrapper {
+    width: 95vw;
+    height: 45vh;
+  }
+  
+  .floating-camera {
+    width: 40vw;
+    min-width: 100px;
+  }
+  
+  .main-area {
+    padding: 10px;
+  }
+}
+
+.scene-container-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 75vh;
+  min-height: 400px;
+  /* max-height: 800px; */
 }
 </style> 
