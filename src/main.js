@@ -5,7 +5,6 @@ import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import { VideoPlay, Delete, ArrowDown } from '@element-plus/icons-vue'
 
 import App from './App.vue'
 import router from './router'
@@ -20,9 +19,5 @@ app.use(ElementPlus)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
-
-app.component('VideoPlay', VideoPlay)
-app.component('Delete', Delete)
-app.component('ArrowDown', ArrowDown)
 
 app.mount('#app')

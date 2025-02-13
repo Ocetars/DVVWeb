@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "@monaco-editor/loader": "^1.4.0",
+    "@vscode/codicons": "^0.0.36",
     "element-plus": "^2.9.4",
+    "monaco-editor": "^0.52.2",
     "pinia": "^2.3.1",
     "three": "^0.173.0",
     "vue": "^3.5.13",
