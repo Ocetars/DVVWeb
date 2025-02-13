@@ -203,15 +203,16 @@ function handleCVOutput(canvas) {
   top: 20px;
   left: 20px;
   z-index: 10;
-  width: 20vw;
-  height: auto;
+  width: 240px;
+  height: 240px;
   aspect-ratio: 1;
   min-width: 160px;
   max-width: 240px;
-  transition: all 0.3s ease;
+  /* transition: all 0.3s ease; */
   backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.7);
-  border: 2px solid #e4e7ed;
+  background-color: rgba(150, 150, 150, 0.7);
+  border: 2px solid #a3a3a3ae;
+  border-radius: 3px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 

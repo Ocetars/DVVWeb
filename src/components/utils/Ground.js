@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 export class Ground {
   constructor(scene, width = 2, depth = 2) {
@@ -24,14 +25,14 @@ export class Ground {
   }
 
   init() {
-    const groundGeometry = new THREE.BoxGeometry(this.width, 0.1, this.depth);
+    const groundGeometry = new RoundedBoxGeometry(this.width, 0.1, this.depth, 10, 0.05);
     this.materials = [
-      new THREE.MeshPhongMaterial({ color: 0x808080 }), // right
-      new THREE.MeshPhongMaterial({ color: 0x808080 }), // left
+      new THREE.MeshPhongMaterial({ color: 0xffffff }), // right
+      new THREE.MeshPhongMaterial({ color: 0xffffff }), // left
       new THREE.MeshPhongMaterial({ map: this.getDefaultTexture() }), // top
-      new THREE.MeshPhongMaterial({ color: 0x808080 }), // bottom
-      new THREE.MeshPhongMaterial({ color: 0x808080 }), // front
-      new THREE.MeshPhongMaterial({ color: 0x808080 })  // back
+      new THREE.MeshPhongMaterial({ color: 0xffffff }), // bottom
+      new THREE.MeshPhongMaterial({ color: 0xffffff }), // front
+      new THREE.MeshPhongMaterial({ color: 0xffffff })  // back
     ];
 
     this.mesh = new THREE.Mesh(groundGeometry, this.materials);
@@ -45,7 +46,7 @@ export class Ground {
     this.depth = depth;
     if (this.mesh) {
       this.mesh.geometry.dispose();
-      this.mesh.geometry = new THREE.BoxGeometry(width, 0.1, depth);
+      this.mesh.geometry = new RoundedBoxGeometry(width, 0.1, depth, 10, 0.05);
     }
   }
 

@@ -177,9 +177,10 @@ onMounted(() => {
   // 初始化场景
   scene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(45, container.value.clientWidth / container.value.clientHeight, 0.1, 1000)
-  renderer = new THREE.WebGLRenderer({ antialias: true })
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setSize(container.value.clientWidth, container.value.clientHeight)
   container.value.appendChild(renderer.domElement)
+  renderer.setClearColor(0x000000, 0); // 设置清除颜色为透明
 
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
@@ -272,7 +273,9 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
 
   // 初始化完成后设置初始视角
-  resetCamera()
+  setTimeout(() => {
+    resetCamera();
+  }, 2000); // 增加1秒的延时
 })
 
 onBeforeUnmount(() => {
@@ -303,11 +306,13 @@ defineExpose({
 <template>
   <div ref="container" class="scene-container">
     <!-- 添加重置视角按钮 -->
-    <div class="camera-reset-btn" @click="resetCamera">
-      <el-icon :size="20">
-        <Refresh />
-      </el-icon>
-    </div>
+    <el-tooltip content="重置视角" placement="left">
+      <div class="camera-reset-btn" @click="resetCamera">
+        <el-icon :size="25">
+          <Refresh />
+        </el-icon>
+      </div>
+    </el-tooltip>
   </div>
 </template>
 
@@ -325,9 +330,9 @@ defineExpose({
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 32px;
-  height: 32px;
-  background-color: rgba(255, 255, 255, 0.7);
+  width: 40px;
+  height: 40px;
+  background-color: rgba(150, 150, 150, 0.7);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -338,6 +343,6 @@ defineExpose({
 }
 
 .camera-reset-btn:hover {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(101, 101, 101, 0.9);
 }
 </style>

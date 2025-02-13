@@ -14,7 +14,8 @@ export class DroneCamera {
   update() {
     if (!this.targetModel) return;
     this.bottomCamera.position.copy(this.targetModel.position);
-    this.bottomCamera.position.y += 0.02; // 稍微向上偏移
+    this.bottomCamera.position.y += 0.02
+    ; // 稍微向上偏移
     this.bottomCamera.rotation.x = -Math.PI / 2; // 摄像头朝下
     this.bottomCamera.updateProjectionMatrix();
   }
