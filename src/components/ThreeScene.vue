@@ -4,6 +4,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
 import { Ground } from '@/components/utils/Ground.js'
+import { ElIcon } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
+import { gsap } from 'gsap'
 
 const props = defineProps({
   groundWidth: {
@@ -116,6 +119,50 @@ function executeUserCode(code) {
   }
 }
 
+// 修改重置视角函数
+function resetCamera() {
+  if (!camera || !ground) return;
+
+  // 计算包围盒
+  const boundingBox = new THREE.Box3();
+  boundingBox.setFromObject(ground.mesh);
+
+  // 计算包围球半径
+  const boundingSphereRadius = boundingBox.getBoundingSphere(new THREE.Sphere()).radius;
+
+  // 计算相机到包围球中心的距离，基于包围球半径和相机的视野
+  const fov = camera.fov * (Math.PI / 180); // 将视角转换为弧度
+  let distance = boundingSphereRadius / Math.sin(fov / 2);
+
+  // 限制最小距离，避免相机过于接近地面
+  const minDistance = boundingSphereRadius * 0.1; // 可以根据需要调整
+  distance = Math.max(distance, minDistance);
+
+    // 调整高度，避免相机过于接近水平面
+    const heightFactor = 1.2; // 可以根据需要调整
+    const height = boundingSphereRadius * heightFactor;
+
+  // 相机目标位置（地面中心）
+  const targetLookAt = new THREE.Vector3(0, 0, 0);
+
+  // 使用 GSAP 创建平滑动画
+  gsap.to(camera.position, {
+    x: targetLookAt.x,
+    y: targetLookAt.y + height * 0.6,
+    z: targetLookAt.z + distance * 0.6,
+    duration: 1,
+    ease: "power2.inOut",
+    onUpdate: () => {
+      camera.lookAt(targetLookAt);
+    },
+    onComplete: () => {
+      // 更新控制器
+      controls.target.copy(targetLookAt);
+      controls.update();
+    }
+  });
+}
+
 onMounted(() => {
   // 加载 OpenCV.js 脚本
   const script = document.createElement('script')
@@ -153,7 +200,7 @@ onMounted(() => {
   // scene.add(fillLight)
 
   // 设置相机位置
-  camera.position.set(0, 1, 2.3)
+  camera.position.set(0, 3, 0)
   camera.lookAt(0, 0, 0)
 
   // 初始化无人机
@@ -223,6 +270,9 @@ onMounted(() => {
   renderer.domElement.addEventListener('click', handleGroundClick);
 
   window.addEventListener('resize', handleResize)
+
+  // 初始化完成后设置初始视角
+  resetCamera()
 })
 
 onBeforeUnmount(() => {
@@ -245,20 +295,49 @@ defineExpose({
   executeUserCode,
   // 暴露自定义位置模式状态
   // isCustomPositionMode, // 不需要暴露状态变量
-  enterCustomPositionMode // 暴露进入自定义模式的方法
+  enterCustomPositionMode, // 暴露进入自定义模式的方法
+  resetCamera // 暴露重置视角的方法
 })
 </script>
 
 <template>
-  <div ref="container" class="scene-container"></div>
+  <div ref="container" class="scene-container">
+    <!-- 添加重置视角按钮 -->
+    <div class="camera-reset-btn" @click="resetCamera">
+      <el-icon :size="20">
+        <Refresh />
+      </el-icon>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 .scene-container {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
   border: 3px solid #dcdfe6;
   border-radius: 4px;
+}
+
+.camera-reset-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 10;
+}
+
+.camera-reset-btn:hover {
+  background-color: rgba(255, 255, 255, 0.9);
 }
 </style>

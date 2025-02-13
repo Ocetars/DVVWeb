@@ -19,10 +19,6 @@ function onUploadImage(file) {
   }
 }
 
-function onUpdateGround() {
-  threeScene.value.updateGroundGeometry()
-}
-
 function onExecuteCode(code) {
   threeScene.value.executeUserCode(code)
 }
@@ -261,9 +257,8 @@ function handleCVOutput(canvas) {
 
 .scene-container-wrapper {
   position: relative;
-  width: 100vw;
-  height: 75vh;
+  width: 90vw;
+  height: 80vh;
   min-height: 400px;
-  /* max-height: 800px; */
 }
 </style> 

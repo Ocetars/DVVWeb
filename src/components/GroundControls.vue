@@ -94,7 +94,7 @@ function handleCustomPosition() {
     <el-divider direction="vertical" />
 
     <el-button 
-      type="warning" 
+      type="primary" round
       :icon="Pointer"
       @click="handleCustomPosition"
       class="position-btn"
@@ -156,16 +156,6 @@ function handleCustomPosition() {
 :deep(.el-divider--vertical) {
   height: 20px;
   margin: 0 5px;
-}
-
-:deep(.el-button--warning) {
-  background-color: #454545;
-  border-color: #454545;
-}
-
-:deep(.el-button--warning:hover) {
-  background-color: #666666;
-  border-color: #666666;
 }
 
 :deep(.el-button--primary) {
