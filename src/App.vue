@@ -12,3 +12,17 @@
   justify-content: center;
 }
 </style>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  overflow: hidden;
+}
+</style>

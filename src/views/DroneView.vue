@@ -191,6 +191,7 @@ function handleCVOutput(canvas) {
   color: white;
   font-weight: 600;
   text-align: center;
+  height: 28px;
 }
 
 :deep(.el-drawer__close-btn) {
