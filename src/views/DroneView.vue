@@ -131,9 +131,9 @@ function handleCustomPosition() {
 
 .footer {
   background-color: #fff;
-  padding: 20px;
-  border-top: 1px solid #dcdfe6;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  padding: 10px;
+  /* border-top: 1px solid #dcdfe6; */
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .footer-content {
@@ -263,16 +263,49 @@ function handleCustomPosition() {
 
 .scene-container-wrapper {
   position: relative;
-  width: 90vw;
-  height: 80vh;
+  width: 100%;
+  height: 100%;
   min-height: 400px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  box-shadow: 
+  overflow: hidden;
+  /* border: 1px solid rgba(0, 0, 0, 0.15); */
+  box-shadow:
     0 2px 12px 0 rgba(0, 0, 0, 0.1),
     0 0 6px 0 rgba(0, 0, 0, 0.12);
   background-color: rgba(245, 245, 245, 0.03);
-  backdrop-filter: blur(8px);
-  overflow: hidden;
+}
+
+/* 新增：边缘模糊遮罩 */
+.scene-container-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 确保遮罩不影响鼠标事件 */
+  z-index: 1; /* 确保在内容之上 */
+  /* 径向渐变，从透明到完全模糊 */
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 90%,
+    rgba(255, 255, 255, 0.3) 95%,
+    rgba(255, 255, 255, 1) 100%
+  ), linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 90%,
+    rgba(255, 255, 255, 0.3) 95%,
+    rgba(255, 255, 255, 1) 100%
+  ), linear-gradient( 
+    to left,
+    rgba(255, 255, 255, 0) 90%,
+    rgba(255, 255, 255, 0.3) 95%,
+    rgba(255, 255, 255, 1) 100%
+  ), linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0) 90%,
+    rgba(255, 255, 255, 0.3) 95%,
+    rgba(255, 255, 255, 1) 100%
+  );
 }
 </style> 

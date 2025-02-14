@@ -163,9 +163,9 @@ function selectPresetGround(imageUrl) {
   gap: 15px;
   align-items: center;
   padding: 10px;
-  background-color: #ffffff;
+  /* background-color: #e6e6e6;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
 }
 
 .dimension-controls {
