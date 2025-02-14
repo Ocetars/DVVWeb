@@ -211,8 +211,6 @@ function handleCustomPosition() {
   width: 240px;
   height: 240px;
   aspect-ratio: 1;
-  min-width: 160px;
-  max-width: 240px;
   /* transition: all 0.3s ease; */
   backdrop-filter: blur(4px);
   background-color: rgba(150, 150, 150, 0.7);
@@ -226,6 +224,11 @@ function handleCustomPosition() {
   .scene-container-wrapper {
     width: 80vw;
   }
+  .floating-camera {
+    width: 150px;
+    height: 150px;
+    aspect-ratio: 1;
+  }
 }
 
 @media (max-width: 768px) {
@@ -235,8 +238,9 @@ function handleCustomPosition() {
   }
   
   .floating-camera {
-    width: 30vw;
-    min-width: 120px;
+    width: 120px;
+    height: 120px;
+    aspect-ratio: 1;
   }
   
   .footer-content {
@@ -252,8 +256,9 @@ function handleCustomPosition() {
   }
   
   .floating-camera {
-    width: 40vw;
-    min-width: 100px;
+    width: 80px;
+    height: 80px;
+    aspect-ratio: 1;
   }
   
   .main-area {
