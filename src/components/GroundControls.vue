@@ -28,7 +28,7 @@ const isPositioning = ref(false)
 // 添加预设地面纹理数据
 const presetGrounds = [
   { name: '草地', image: '/textures/grass.jpg' },
-  { name: '水泥', image: '/textures/concrete.jpg' },
+  { name: '2022B', image: '/textures/2022B.png' },
   { name: '木地板', image: '/textures/wood.jpg' },
 ]
 
@@ -114,13 +114,13 @@ function selectPresetGround(imageUrl) {
 
     <div class="dimension-controls">
       <div class="input-group">
-        <span class="label">宽度</span>
+        <span class="label">地面横向宽度</span>
         <el-input
           v-model.number="localGroundWidth"
           type="number"
-          :step="0.1"
+          :step="1"
           @change="updateWidth"
-          :min="0.1"
+          :min="1"
           class="dimension-input"
         >
           <template #suffix>m</template>
@@ -128,13 +128,13 @@ function selectPresetGround(imageUrl) {
       </div>
 
       <div class="input-group">
-        <span class="label">深度</span>
+        <span class="label">地面纵向深度</span>
         <el-input
           v-model.number="localGroundDepth"
           type="number"
-          :step="0.1"
+          :step="1"
           @change="updateDepth"
-          :min="0.1"
+          :min="1"
           class="dimension-input"
         >
           <template #suffix>m</template>
