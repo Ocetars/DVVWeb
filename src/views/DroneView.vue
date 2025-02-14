@@ -266,5 +266,13 @@ function handleCustomPosition() {
   width: 90vw;
   height: 80vh;
   min-height: 400px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 
+    0 2px 12px 0 rgba(0, 0, 0, 0.1),
+    0 0 6px 0 rgba(0, 0, 0, 0.12);
+  background-color: rgba(245, 245, 245, 0.03);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 </style> 
