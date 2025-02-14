@@ -1,9 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { ElDrawer, ElTooltip, ElContainer, ElHeader, ElMain, ElFooter } from 'element-plus'
+import { ElDrawer, ElContainer, ElMain, ElFooter } from 'element-plus'
 import ThreeScene from '@/components/ThreeScene.vue'
 import GroundControls from '@/components/GroundControls.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
+// 导入 AppHeader 组件
+import AppHeader from '@/components/AppHeader.vue'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -16,7 +18,7 @@ const drawerVisible = ref(false)
 const isCustomPositionMode = ref(false)
 
 function onUploadImage(file) {
-  if(file){
+  if (file) {
     threeScene.value.handleImageUpload(file)
   }
 }
@@ -34,7 +36,7 @@ const updateGroundDimensions = (payload) => {
 function handleCVOutput(canvas) {
   const containerDom = cvOutputContainer.value
   if (!containerDom) return
-  
+
   while (containerDom.firstChild) {
     containerDom.removeChild(containerDom.firstChild)
   }
@@ -50,53 +52,38 @@ function handleCustomPosition() {
 
 <template>
   <el-container class="layout-container">
-    <el-header height="48px" class="header">
-      <div class="floating-trigger">
-        <el-tooltip
-          content="打开代码编辑器"
-          placement="bottom"
-          effect="dark"
-        >
-          <div class="trigger-button" @click="drawerVisible = true">
-            <el-icon class="code-icon"><EditPen /></el-icon>
-          </div>
-        </el-tooltip>
-      </div>
+    <!-- 顶部导航栏 (使用 AppHeader 组件) -->
+    <el-header>
+      <AppHeader :drawer-visible="drawerVisible" @update:drawer-visible="drawerVisible = $event" />
     </el-header>
 
+    <!-- 主体内容区域 -->
     <el-main class="main-area">
+      <!-- 3D 场景及 CV 输出容器 -->
       <div class="scene-container-wrapper">
-        <ThreeScene 
-          :groundWidth="groundWidth" 
-          :groundDepth="groundDepth" 
-          ref="threeScene"
-          @update-ground-dimensions="updateGroundDimensions"
-          @cv-output="handleCVOutput"
-          v-model:is-custom-position-mode="isCustomPositionMode"
-        />
+        <!-- 3D 场景组件 -->
+        <ThreeScene :groundWidth="groundWidth" :groundDepth="groundDepth" ref="threeScene"
+          @update-ground-dimensions="updateGroundDimensions" @cv-output="handleCVOutput"
+          v-model:is-custom-position-mode="isCustomPositionMode" />
+        <!-- CV 输出容器 (用于显示摄像头处理后的图像) -->
         <div ref="cvOutputContainer" class="floating-camera"></div>
       </div>
     </el-main>
 
+    <!-- 底部控制栏 -->
     <el-footer height="auto" class="footer">
+      <!-- 控制栏内容 -->
       <div class="footer-content">
-        <GroundControls 
-          v-model:ground-width="groundWidth" 
-          v-model:ground-depth="groundDepth"
-          v-model:is-custom-position-mode="isCustomPositionMode"
-          @custom-position="handleCustomPosition"
-          @upload-image="onUploadImage" 
-        />
+        <!-- 地面控制组件 -->
+        <GroundControls v-model:ground-width="groundWidth" v-model:ground-depth="groundDepth"
+          v-model:is-custom-position-mode="isCustomPositionMode" @custom-position="handleCustomPosition"
+          @upload-image="onUploadImage" />
       </div>
     </el-footer>
 
     <!-- 代码编辑器抽屉 -->
-    <el-drawer
-      v-model="drawerVisible"
-      title="代码编辑器"
-      size="80%"
-      direction="ttb"
-    >
+    <el-drawer v-model="drawerVisible" title="代码编辑器" size="80%" direction="ttb">
+      <!-- 代码编辑器组件 -->
       <CodeEditor @execute-code="onExecuteCode" />
     </el-drawer>
   </el-container>
@@ -107,16 +94,6 @@ function handleCustomPosition() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-.header {
-  background-color: #fff;
-  border-bottom: 1px solid #dcdfe6;
-  position: relative;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .main-area {
@@ -143,46 +120,6 @@ function handleCustomPosition() {
   justify-content: center;
 }
 
-.floating-trigger {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.trigger-button {
-  display: flex;
-  align-items: center;
-  background: #333333;
-  padding: 8px 16px;
-  border-radius: 0 0 16px 16px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.trigger-button:hover {
-  background: #666666;
-  padding-top: 12px;
-}
-
-.code-icon {
-  font-size: 20px;
-  color: white;
-}
-
-.controls-container {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.control-buttons {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
 /* 抽屉样式 */
 :deep(.el-drawer) {
   background: #1e1e1e;
@@ -196,10 +133,27 @@ function handleCustomPosition() {
   font-weight: 600;
   text-align: center;
   height: 28px;
+  position: relative; /* 添加相对定位 */
 }
 
 :deep(.el-drawer__close-btn) {
-  color: white;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(255, 255, 255);
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-drawer__close-btn:hover) {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* 添加浮动摄像头样式 */
@@ -224,6 +178,7 @@ function handleCustomPosition() {
   .scene-container-wrapper {
     width: 80vw;
   }
+
   .floating-camera {
     width: 150px;
     height: 150px;
@@ -236,13 +191,13 @@ function handleCustomPosition() {
     width: 90vw;
     height: 50vh;
   }
-  
+
   .floating-camera {
     width: 120px;
     height: 120px;
     aspect-ratio: 1;
   }
-  
+
   .footer-content {
     max-width: 100%;
     padding: 0 10px;
@@ -254,13 +209,13 @@ function handleCustomPosition() {
     width: 95vw;
     height: 45vh;
   }
-  
+
   .floating-camera {
     width: 80px;
     height: 80px;
     aspect-ratio: 1;
   }
-  
+
   .main-area {
     padding: 10px;
   }
@@ -274,9 +229,7 @@ function handleCustomPosition() {
   border-radius: 12px;
   overflow: hidden;
   /* border: 1px solid rgba(0, 0, 0, 0.15); */
-  box-shadow:
-    0 2px 12px 0 rgba(0, 0, 0, 0.1),
-    0 0 6px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1), 0 0 6px 0 rgba(0, 0, 0, 0.12);
   background-color: rgba(245, 245, 245, 0.03);
 }
 
@@ -288,29 +241,14 @@ function handleCustomPosition() {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* 确保遮罩不影响鼠标事件 */
-  z-index: 1; /* 确保在内容之上 */
+  pointer-events: none;
+  /* 确保遮罩不影响鼠标事件 */
+  z-index: 1;
+  /* 确保在内容之上 */
   /* 径向渐变，从透明到完全模糊 */
-  background: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0) 90%,
-    rgba(255, 255, 255, 0.3) 95%,
-    rgba(255, 255, 255, 1) 100%
-  ), linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 90%,
-    rgba(255, 255, 255, 0.3) 95%,
-    rgba(255, 255, 255, 1) 100%
-  ), linear-gradient( 
-    to left,
-    rgba(255, 255, 255, 0) 90%,
-    rgba(255, 255, 255, 0.3) 95%,
-    rgba(255, 255, 255, 1) 100%
-  ), linear-gradient(
-    to top,
-    rgba(255, 255, 255, 0) 90%,
-    rgba(255, 255, 255, 0.3) 95%,
-    rgba(255, 255, 255, 1) 100%
-  );
+  background: linear-gradient(to right, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%),
+    linear-gradient(to left, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%),
+    linear-gradient(to top, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%);
 }
 </style> 

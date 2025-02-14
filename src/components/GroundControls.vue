@@ -190,6 +190,11 @@ function selectPresetGround(imageUrl) {
   width: 100px;
 }
 
+/* 添加后缀样式 */
+:deep(.el-input__suffix) {
+  margin-left: 4px;
+}
+
 .position-btn {
   white-space: nowrap;
 }
