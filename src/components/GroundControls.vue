@@ -12,19 +12,27 @@ const props = defineProps({
   groundDepth: {
     type: Number,
     default: 2
+  },
+  isCustomPositionMode: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['update:groundWidth', 'update:groundDepth', 'upload-image', 'update-ground', 'custom-position'])
+const emit = defineEmits(['update:groundWidth', 'update:groundDepth', 'upload-image', 'update-ground', 'custom-position', 'update:isCustomPositionMode'])
 
 const localGroundWidth = ref(props.groundWidth)
 const localGroundDepth = ref(props.groundDepth)
+const isPositioning = ref(false)
 
 watch(() => props.groundWidth, (newVal) => {
   localGroundWidth.value = newVal
 })
 watch(() => props.groundDepth, (newVal) => {
   localGroundDepth.value = newVal
+})
+watch(() => props.isCustomPositionMode, (newVal) => {
+  isPositioning.value = newVal
 })
 
 function updateWidth() {
@@ -94,12 +102,14 @@ function handleCustomPosition() {
     <el-divider direction="vertical" />
 
     <el-button 
-      type="primary" round
+      type="primary" 
+      round
       :icon="Pointer"
       @click="handleCustomPosition"
       class="position-btn"
+      :class="{ 'positioning': isPositioning }"
     >
-      摆放无人机
+      {{ isPositioning ? '请点击地面' : '摆放无人机' }}
     </el-button>
   </div>
 </template>
@@ -168,6 +178,28 @@ function handleCustomPosition() {
   border-color: #666666;
 }
 
+.position-btn.positioning {
+  background-color: #e6a23c;
+  border-color: #e6a23c;
+  animation: pulse 2s infinite;
+}
+
+.position-btn.positioning:hover {
+  background-color: #f0b959;
+  border-color: #f0b959;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 162, 60, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(230, 162, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 162, 60, 0);
+  }
+}
 
 /* 响应式设计 */
 @media (max-width: 768px) {

@@ -13,6 +13,8 @@ const cvOutputContainer = ref(null)
 // 添加抽屉控制变量
 const drawerVisible = ref(false)
 
+const isCustomPositionMode = ref(false)
+
 function onUploadImage(file) {
   if(file){
     threeScene.value.handleImageUpload(file)
@@ -21,18 +23,12 @@ function onUploadImage(file) {
 
 function onExecuteCode(code) {
   threeScene.value.executeUserCode(code)
+  drawerVisible.value = false
 }
 
 // 当 ThreeScene 组件内部因图片更新而需要调整地面宽度时，会通过事件通知父组件
 const updateGroundDimensions = (payload) => {
   groundWidth.value = payload.groundWidth
-}
-
-// 修改：直接调用 ThreeScene 的 enterCustomPositionMode 方法
-function enterCustomPositionMode() {
-    if (threeScene.value) {
-        threeScene.value.enterCustomPositionMode();
-    }
 }
 
 function handleCVOutput(canvas) {
@@ -43,6 +39,12 @@ function handleCVOutput(canvas) {
     containerDom.removeChild(containerDom.firstChild)
   }
   containerDom.appendChild(canvas)
+}
+
+function handleCustomPosition() {
+  if (threeScene.value) {
+    threeScene.value.enterCustomPositionMode()
+  }
 }
 </script>
 
@@ -70,6 +72,7 @@ function handleCVOutput(canvas) {
           ref="threeScene"
           @update-ground-dimensions="updateGroundDimensions"
           @cv-output="handleCVOutput"
+          v-model:is-custom-position-mode="isCustomPositionMode"
         />
         <div ref="cvOutputContainer" class="floating-camera"></div>
       </div>
@@ -78,10 +81,11 @@ function handleCVOutput(canvas) {
     <el-footer height="auto" class="footer">
       <div class="footer-content">
         <GroundControls 
-          v-model:groundWidth="groundWidth" 
-          v-model:groundDepth="groundDepth"
+          v-model:ground-width="groundWidth" 
+          v-model:ground-depth="groundDepth"
+          v-model:is-custom-position-mode="isCustomPositionMode"
+          @custom-position="handleCustomPosition"
           @upload-image="onUploadImage" 
-          @custom-position="enterCustomPositionMode"
         />
       </div>
     </el-footer>

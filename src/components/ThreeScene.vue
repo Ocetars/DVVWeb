@@ -18,7 +18,7 @@ const props = defineProps({
     default: 2
   }
 })
-const emit = defineEmits(['update-ground-dimensions', 'cv-output'])
+const emit = defineEmits(['update-ground-dimensions', 'cv-output', 'update:isCustomPositionMode'])
 
 const container = ref(null)
 const bottomCameraContainer = ref(null)
@@ -27,6 +27,8 @@ let scene, camera, renderer, controls, drone
 let ground
 // 添加一个 ref 来控制自定义位置模式
 const isCustomPositionMode = ref(false)
+// 添加一个 ref 来控制提示文本的显示
+const showPositionHint = ref(false)
 
 // 更新地面几何体（使用 props 中的 groundWidth、groundDepth）
 function updateGroundGeometry() {
@@ -68,6 +70,13 @@ function handleResize() {
 // 新增：进入自定义位置模式
 function enterCustomPositionMode() {
   isCustomPositionMode.value = true;
+  emit('update:isCustomPositionMode', true);
+  // 显示提示文本
+  showPositionHint.value = true;
+  // 2秒后自动隐藏
+  setTimeout(() => {
+    showPositionHint.value = false;
+  }, 2000);
 }
 
 // 修改：处理地面点击事件
@@ -85,8 +94,9 @@ function handleGroundClick(event) {
   if (intersects.length > 0) {
     const point = intersects[0].point;
     drone.movement.setPosition(point.x, 0.05, point.z);
-    // 退出自定义位置模式
+    // 退出自定义位置模式并通知父组件
     isCustomPositionMode.value = false;
+    emit('update:isCustomPositionMode', false);
   }
 }
 
@@ -304,7 +314,11 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="container" class="scene-container">
+  <div 
+    ref="container" 
+    class="scene-container"
+    :class="{ 'custom-position-mode': isCustomPositionMode }"
+  >
     <!-- 添加重置视角按钮 -->
     <el-tooltip content="重置视角" placement="left">
       <div class="camera-reset-btn" @click="resetCamera">
@@ -313,6 +327,11 @@ defineExpose({
         </el-icon>
       </div>
     </el-tooltip>
+
+    <!-- 修改：使用 showPositionHint 控制提示文本的显示 -->
+    <div v-if="showPositionHint" class="position-mode-hint">
+      点击地面以放置无人机
+    </div>
   </div>
 </template>
 
@@ -328,8 +347,8 @@ defineExpose({
 
 .camera-reset-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 15px;
+  right: 15px;
   width: 40px;
   height: 40px;
   background-color: rgba(150, 150, 150, 0.7);
@@ -344,5 +363,42 @@ defineExpose({
 
 .camera-reset-btn:hover {
   background-color: rgba(101, 101, 101, 0.9);
+}
+
+.custom-position-mode {
+  cursor: crosshair;
+}
+
+.position-mode-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  animation: fadeInOut 2s ease-in-out forwards;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
 }
 </style>
