@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { ElDrawer, ElContainer, ElMain, ElFooter } from 'element-plus'
+import { ref, watch, onBeforeUnmount } from 'vue'
+import { ElDrawer, ElContainer, ElMain, ElFooter, ElMessage } from 'element-plus'
 import ThreeScene from '@/components/ThreeScene.vue'
 import GroundControls from '@/components/GroundControls.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -17,15 +17,51 @@ const drawerVisible = ref(false)
 
 const isCustomPositionMode = ref(false)
 
+// 获取 CodeEditor 组件的引用
+const codeEditor = ref(null)
+
+// 添加计时相关的状态
+const isTimerRunning = ref(false)
+const elapsedTime = ref(0)
+let timerInterval = null
+
 function onUploadImage(file) {
   if (file) {
     threeScene.value.handleImageUpload(file)
   }
 }
 
-function onExecuteCode(code) {
-  threeScene.value.executeUserCode(code)
+// 修改为两个不同的执行函数
+function onExecuteCodeFromEditor(code) {
+  // 从编辑器执行时，先关闭抽屉再执行
   drawerVisible.value = false
+  
+  // 等待抽屉完全关闭后执行代码
+  setTimeout(() => {
+    executeCode(code)
+  }, 500)
+}
+
+function onExecuteCodeFromControls() {
+  // 从控制栏执行时，直接执行当前代码
+  if (codeEditor.value) {
+    const currentCode = codeEditor.value.getCurrentCode()
+    if (!currentCode?.trim()) {
+      ElMessage.warning('请先编辑您的代码')
+      drawerVisible.value = true
+      return
+    }
+    executeCode(currentCode)
+  } else {
+    ElMessage.warning('请先打开代码编辑器输入代码')
+    drawerVisible.value = true
+  }
+}
+
+// 统一的代码执行函数
+function executeCode(code) {
+  threeScene.value.executeUserCode(code)
+  startTimer()
 }
 
 // 当 ThreeScene 组件内部因图片更新而需要调整地面宽度时，会通过事件通知父组件
@@ -48,6 +84,52 @@ function handleCustomPosition() {
     threeScene.value.enterCustomPositionMode()
   }
 }
+
+// 计时器控制函数
+function startTimer() {
+  if (!isTimerRunning.value) {
+    isTimerRunning.value = true
+    elapsedTime.value = 0
+    timerInterval = setInterval(() => {
+      elapsedTime.value++
+    }, 1000)
+  }
+}
+
+function stopTimer() {
+  if (isTimerRunning.value) {
+    isTimerRunning.value = false
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+}
+
+// 在组件卸载时清理计时器
+onBeforeUnmount(() => {
+  stopTimer()
+})
+
+// 修改停止代码的方法
+function handleStopCode() {
+  if (threeScene.value) {
+    // 停止代码执行
+    threeScene.value.executeUserCode('')  // 传入空代码来停止执行
+    // 重置无人机位置
+    threeScene.value.resetDronePosition()
+  }
+  // 停止计时器
+  stopTimer()
+  
+  // 清空 CV 输出
+  const containerDom = cvOutputContainer.value
+  if (containerDom) {
+    while (containerDom.firstChild) {
+      containerDom.removeChild(containerDom.firstChild)
+    }
+  }
+}
+
+// 将计时状态传递给 GroundControls
 </script>
 
 <template>
@@ -76,15 +158,15 @@ function handleCustomPosition() {
       <div class="footer-content">
         <!-- 地面控制组件 -->
         <GroundControls v-model:ground-width="groundWidth" v-model:ground-depth="groundDepth"
-          v-model:is-custom-position-mode="isCustomPositionMode" @custom-position="handleCustomPosition"
-          @upload-image="onUploadImage" />
+          v-model:is-custom-position-mode="isCustomPositionMode" :timer-running="isTimerRunning"
+          :elapsed-time="elapsedTime" @custom-position="handleCustomPosition" @upload-image="onUploadImage"
+          @execute-code="onExecuteCodeFromControls" @stop-code="handleStopCode" />
       </div>
     </el-footer>
 
     <!-- 代码编辑器抽屉 -->
     <el-drawer v-model="drawerVisible" title="代码编辑器" size="80%" direction="ttb">
-      <!-- 代码编辑器组件 -->
-      <CodeEditor @execute-code="onExecuteCode" />
+      <CodeEditor ref="codeEditor" @execute-code="onExecuteCodeFromEditor" />
     </el-drawer>
   </el-container>
 </template>

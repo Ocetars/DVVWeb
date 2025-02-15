@@ -88,6 +88,11 @@ watch(code, (newValue) => {
     codeEditor.setValue(newValue)
   }
 })
+
+// 暴露获取当前代码的方法
+defineExpose({
+  getCurrentCode: () => code.value
+})
 </script>
 
 <template>

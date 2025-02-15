@@ -29,6 +29,8 @@ let ground
 const isCustomPositionMode = ref(false)
 // 添加一个 ref 来控制提示文本的显示
 const showPositionHint = ref(false)
+// 添加一个变量来控制代码执行状态
+const isCodeRunning = ref(false)
 
 // 更新地面几何体（使用 props 中的 groundWidth、groundDepth）
 function updateGroundGeometry() {
@@ -100,32 +102,39 @@ function handleGroundClick(event) {
   }
 }
 
-// 修改后的 executeUserCode 函数
+// 修改 executeUserCode 函数
 function executeUserCode(code) {
   try {
     if (code.trim()) {
+      // 设置代码开始执行
+      isCodeRunning.value = true
+      
       window.processFrame = new Function('frame', 'cv', 'drone', `
-          try {
-            const result = (function() {
-              ${code}
-            })();
-            // 用户代码应返回一个数组：[运动命令, 图像]
-            if (Array.isArray(result) && result.length === 2) {
-              return result;
-            } else {
-              // 默认返回悬停命令和原始帧
-              return [{ hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) }, frame];
-            }
-          } catch (error) {
-            console.error('代码执行错误:', error);
+        try {
+          const result = (function() {
+            ${code}
+          })();
+          // 用户代码应返回一个数组：[运动命令, 图像]
+          if (Array.isArray(result) && result.length === 2) {
+            return result;
+          } else {
+            // 默认返回悬停命令和原始帧
             return [{ hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) }, frame];
           }
-        `);
+        } catch (error) {
+          console.error('代码执行错误:', error);
+          return [{ hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) }, frame];
+        }
+      `);
     } else {
-      console.error('未成功运行');
+      // 停止代码执行
+      isCodeRunning.value = false
+      window.processFrame = null
     }
   } catch (error) {
     console.error('代码执行错误:', error);
+    isCodeRunning.value = false
+    window.processFrame = null
   }
 }
 
@@ -171,6 +180,16 @@ function resetCamera() {
       controls.update();
     }
   });
+}
+
+// 修改重置无人机位置的方法
+function resetDronePosition() {
+  if (drone && drone.movement) {
+    // 重置到初始位置
+    drone.movement.setPosition(0, 0.05, 0)
+    // 重置运动状态
+    drone.movement.setMovementCommand({ hover: true, angle: 0, speed: 0, altitude: 0.05 })
+  }
 }
 
 onMounted(() => {
@@ -240,14 +259,16 @@ onMounted(() => {
     requestAnimationFrame(animate)
     const delta = clock.getDelta();
     controls.update()
+    
     // 更新无人机
     if (drone) {
       drone.update(delta)
       drone.updateCamera()
       drone.renderCamera()
     }
-    // 处理图像和运动指令
-    if (window.cv && window.processFrame && !isCustomPositionMode.value) { // 自定义模式下停止图像处理
+    
+    // 只在代码运行状态下处理图像和运动指令
+    if (window.cv && window.processFrame && isCodeRunning.value && !isCustomPositionMode.value) {
       try {
         const canvas = drone.getBottomCameraImage()
         const frame = cv.imread(canvas)
@@ -259,6 +280,7 @@ onMounted(() => {
           movementCommand = { hover: true, angle: 0, speed: 0, altitude: (drone && drone.movement && drone.movement.model ? drone.movement.model.position.y : 0) };
           processedFrame = frame;
         }
+        
         // 将运动命令应用到无人机
         if (drone && drone.movement && drone.movement.setMovementCommand) {
           drone.movement.setMovementCommand(movementCommand);
@@ -306,10 +328,9 @@ defineExpose({
   updateGroundGeometry,
   handleImageUpload,
   executeUserCode,
-  // 暴露自定义位置模式状态
-  // isCustomPositionMode, // 不需要暴露状态变量
-  enterCustomPositionMode, // 暴露进入自定义模式的方法
-  resetCamera // 暴露重置视角的方法
+  enterCustomPositionMode,
+  resetCamera,
+  resetDronePosition
 })
 </script>
 
