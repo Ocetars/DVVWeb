@@ -2,7 +2,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { ElUpload, ElInput, ElButton, ElIcon, ElDivider, ElPopover, ElMessage } from 'element-plus'
-import { Upload, Refresh, Pointer, VideoPlay, VideoPause } from '@element-plus/icons-vue'
+import { UploadFilled, Pointer, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 
 const props = defineProps({
   groundWidth: {
@@ -121,7 +121,7 @@ function formatTime(seconds) {
           accept="image/*"
           :on-change="handleUpload"
         >
-          <el-button type="primary" :icon="Upload">
+          <el-button type="primary" :icon="UploadFilled">
             上传地面纹理
           </el-button>
         </el-upload>

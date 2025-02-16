@@ -6,6 +6,7 @@ import GroundControls from '@/components/GroundControls.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 // 导入 AppHeader 组件
 import AppHeader from '@/components/AppHeader.vue'
+import { useSceneStore } from '@/stores/sceneStore'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -25,8 +26,17 @@ const isTimerRunning = ref(false)
 const elapsedTime = ref(0)
 let timerInterval = null
 
+const sceneStore = useSceneStore()
+const currentTexture = ref('')               // 保存当前地面纹理的 URL
+const savedScenesDrawerVisible = ref(false)    // 控制保存场景抽屉的显示
+
 function onUploadImage(file) {
   if (file) {
+    if (file instanceof File) {
+      currentTexture.value = URL.createObjectURL(file)
+    } else if (typeof file === 'string') {
+      currentTexture.value = file
+    }
     threeScene.value.handleImageUpload(file)
   }
 }
@@ -129,6 +139,25 @@ function handleStopCode() {
   }
 }
 
+// 新增：保存当前场景到 pinia store
+function saveCurrentScene() {
+  sceneStore.addScene({
+    groundWidth: groundWidth.value,
+    groundDepth: groundDepth.value,
+    texture: currentTexture.value
+  })
+  ElMessage.success('场景已保存')
+}
+
+// 新增：加载保存的场景
+function loadScene(scene) {
+  groundWidth.value = scene.groundWidth
+  groundDepth.value = scene.groundDepth
+  threeScene.value.loadSceneTexture(scene.texture)
+  ElMessage.success('场景加载成功')
+  savedScenesDrawerVisible.value = false
+}
+
 // 将计时状态传递给 GroundControls
 </script>
 
@@ -146,7 +175,8 @@ function handleStopCode() {
         <!-- 3D 场景组件 -->
         <ThreeScene :groundWidth="groundWidth" :groundDepth="groundDepth" ref="threeScene"
           @update-ground-dimensions="updateGroundDimensions" @cv-output="handleCVOutput"
-          v-model:is-custom-position-mode="isCustomPositionMode" />
+          v-model:is-custom-position-mode="isCustomPositionMode" @save-scene="saveCurrentScene"
+          @load-scene="savedScenesDrawerVisible = true" />
         <!-- CV 输出容器 (用于显示摄像头处理后的图像) -->
         <div ref="cvOutputContainer" class="floating-camera"></div>
       </div>
@@ -167,6 +197,27 @@ function handleStopCode() {
     <!-- 代码编辑器抽屉 -->
     <el-drawer v-model="drawerVisible" title="代码编辑器" size="80%" direction="ttb">
       <CodeEditor ref="codeEditor" @execute-code="onExecuteCodeFromEditor" />
+    </el-drawer>
+
+    <!-- 新增：右侧抽屉展示已保存场景 -->
+    <el-drawer
+      v-model="savedScenesDrawerVisible"
+      title="已保存场景"
+      :with-header="true"
+      direction="rtl"
+      size="30%"
+    >
+      <div class="scene-list">
+        <div 
+          v-for="scene in sceneStore.scenes" 
+          :key="scene.id" 
+          class="scene-item"
+          @click="loadScene(scene)"
+        >
+          <img :src="scene.texture" alt="场景预览" class="scene-preview" />
+          <div>宽: {{ scene.groundWidth }} m, 深: {{ scene.groundDepth }} m</div>
+        </div>
+      </div>
     </el-drawer>
   </el-container>
 </template>
@@ -332,5 +383,34 @@ function handleStopCode() {
     linear-gradient(to bottom, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%),
     linear-gradient(to left, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%),
     linear-gradient(to top, rgba(255, 255, 255, 0) 90%, rgba(255, 255, 255, 0.3) 95%, rgba(255, 255, 255, 1) 100%);
+}
+
+/* 新增：已保存场景抽屉样式 */
+.scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.scene-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.scene-item:hover {
+  background-color: #f5f7fa;
+}
+
+.scene-preview {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
 }
 </style> 

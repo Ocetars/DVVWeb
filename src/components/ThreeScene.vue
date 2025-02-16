@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
 import { Ground } from '@/components/utils/Ground.js'
 import { ElIcon } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, DocumentChecked, Fold } from '@element-plus/icons-vue'
 import { gsap } from 'gsap'
 
 const props = defineProps({
@@ -18,7 +18,7 @@ const props = defineProps({
     default: 2
   }
 })
-const emit = defineEmits(['update-ground-dimensions', 'cv-output', 'update:isCustomPositionMode'])
+const emit = defineEmits(['update-ground-dimensions', 'cv-output', 'update:isCustomPositionMode', 'save-scene', 'load-scene'])
 
 const container = ref(null)
 const bottomCameraContainer = ref(null)
@@ -192,6 +192,17 @@ function resetDronePosition() {
   }
 }
 
+// 新增：加载场景纹理
+function loadSceneTexture(url) {
+  const loader = new THREE.TextureLoader()
+  loader.load(url, (texture) => {
+    texture.needsUpdate = true
+    if (ground) {
+      ground.updateTexture(texture)
+    }
+  })
+}
+
 onMounted(() => {
   // 加载 OpenCV.js 脚本
   const script = document.createElement('script')
@@ -330,7 +341,8 @@ defineExpose({
   executeUserCode,
   enterCustomPositionMode,
   resetCamera,
-  resetDronePosition
+  resetDronePosition,
+  loadSceneTexture
 })
 </script>
 
@@ -340,14 +352,32 @@ defineExpose({
     class="scene-container"
     :class="{ 'custom-position-mode': isCustomPositionMode }"
   >
-    <!-- 添加重置视角按钮 -->
-    <el-tooltip content="重置视角" placement="left">
-      <div class="camera-reset-btn" @click="resetCamera">
-        <el-icon :size="25">
-          <Refresh />
-        </el-icon>
-      </div>
-    </el-tooltip>
+    <!-- 控制按钮组 -->
+    <div class="control-buttons">
+      <el-tooltip content="重置视角" placement="bottom">
+        <div class="control-btn" @click="resetCamera">
+          <el-icon :size="20">
+            <Refresh />
+          </el-icon>
+        </div>
+      </el-tooltip>
+      
+      <el-tooltip content="保存场景" placement="bottom">
+        <div class="control-btn" @click="$emit('save-scene')">
+          <el-icon :size="20">
+            <DocumentChecked />
+          </el-icon>
+        </div>
+      </el-tooltip>
+      
+      <el-tooltip content="加载场景" placement="bottom">
+        <div class="control-btn" @click="$emit('load-scene')">
+          <el-icon :size="20">
+            <Fold />
+          </el-icon>
+        </div>
+      </el-tooltip>
+    </div>
 
     <!-- 修改：使用 showPositionHint 控制提示文本的显示 -->
     <div v-if="showPositionHint" class="position-mode-hint">
@@ -366,23 +396,29 @@ defineExpose({
   border-radius: 4px; */
 }
 
-.camera-reset-btn {
+.control-buttons {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  flex-direction: row;
+  gap:10px;
+  z-index: 10;
+}
+
+.control-btn {
   width: 40px;
   height: 40px;
   background-color: rgba(150, 150, 150, 0.7);
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s;
-  z-index: 10;
 }
 
-.camera-reset-btn:hover {
+.control-btn:hover {
   background-color: rgba(101, 101, 101, 0.9);
 }
 
