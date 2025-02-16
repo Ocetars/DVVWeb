@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import { ElTooltip, ElButton } from 'element-plus'
-import { Document, Setting, User, EditPen } from '@element-plus/icons-vue'
+import { Document, Setting, EditPen } from '@element-plus/icons-vue'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/vue'
 
 // 添加 logo 路径
 import logoHeader from '@/assets/Logo_header.png'
@@ -28,11 +29,6 @@ const handleSettingClick = () => {
   console.log('设置功能待实现')
 }
 
-const handleLoginClick = () => {
-  // 登录功能待实现
-  console.log('登录功能待实现')
-}
-
 // 更新 drawerVisible 的值
 const updateDrawerVisible = (value) => {
   emit('update:drawerVisible', value)
@@ -56,7 +52,7 @@ const updateDrawerVisible = (value) => {
       </el-tooltip>
     </div>
 
-    <!-- 右侧图标按钮组 (文档、设置、登录) -->
+    <!-- 右侧图标按钮组 -->
     <div class="header-right">
       <el-tooltip content="文档" placement="bottom" effect="dark">
         <el-button class="header-icon-btn" :icon="Document" @click="handleDocClick" />
@@ -66,9 +62,16 @@ const updateDrawerVisible = (value) => {
         <el-button class="header-icon-btn" :icon="Setting" @click="handleSettingClick" />
       </el-tooltip>
 
-      <el-tooltip content="登录" placement="bottom" effect="dark">
-        <el-button class="header-icon-btn" :icon="User" @click="handleLoginClick" />
-      </el-tooltip>
+      <!-- Clerk 登录组件 -->
+      <SignedOut>
+        <SignInButton mode="modal">
+          <el-button type="primary">登录</el-button>
+        </SignInButton>
+      </SignedOut>
+      
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
     </div>
   </header>
 </template>
@@ -170,5 +173,19 @@ const updateDrawerVisible = (value) => {
   .header-right {
     gap: 4px;
   }
+}
+
+/* Clerk 组件样式调整 */
+:deep(.cl-userButtonBox) {
+  height: 36px;
+}
+
+:deep(.cl-userButtonTrigger) {
+  padding: 0 8px;
+}
+
+:deep(.cl-userButtonAvatarBox) {
+  width: 24px;
+  height: 24px;
 }
 </style> 
