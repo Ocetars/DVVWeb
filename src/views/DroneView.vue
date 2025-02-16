@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { ElDrawer, ElContainer, ElMain, ElFooter, ElMessage } from 'element-plus'
 import ThreeScene from '@/components/ThreeScene.vue'
 import GroundControls from '@/components/GroundControls.vue'
@@ -7,6 +7,7 @@ import CodeEditor from '@/components/CodeEditor.vue'
 // 导入 AppHeader 组件
 import AppHeader from '@/components/AppHeader.vue'
 import { useSceneStore } from '@/stores/sceneStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -29,6 +30,8 @@ let timerInterval = null
 const sceneStore = useSceneStore()
 const currentTexture = ref('')               // 保存当前地面纹理的 URL
 const savedScenesDrawerVisible = ref(false)    // 控制保存场景抽屉的显示
+
+const authStore = useAuthStore()
 
 function onUploadImage(file) {
   if (file) {
@@ -139,8 +142,21 @@ function handleStopCode() {
   }
 }
 
-// 新增：保存当前场景到 pinia store
-function saveCurrentScene() {
+// 新增：在组件挂载后检查用户登录状态
+onMounted(() => {
+  authStore.setUser()
+  // 如果用户已登录，则加载场景
+  if (authStore.isLoggedIn) {
+    sceneStore.fetchScenes()
+  }
+})
+
+// 修改：保存当前场景到 pinia store
+async function saveCurrentScene() {
+  if (!authStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
   sceneStore.addScene({
     groundWidth: groundWidth.value,
     groundDepth: groundDepth.value,
@@ -149,8 +165,12 @@ function saveCurrentScene() {
   ElMessage.success('场景已保存')
 }
 
-// 新增：加载保存的场景
-function loadScene(scene) {
+// 修改：加载保存的场景
+async function loadScene(scene) {
+  if (!authStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
   groundWidth.value = scene.groundWidth
   groundDepth.value = scene.groundDepth
   threeScene.value.loadSceneTexture(scene.texture)
@@ -199,8 +219,9 @@ function loadScene(scene) {
       <CodeEditor ref="codeEditor" @execute-code="onExecuteCodeFromEditor" />
     </el-drawer>
 
-    <!-- 新增：右侧抽屉展示已保存场景 -->
+    <!-- 仅在用户登录时显示已保存场景抽屉 -->
     <el-drawer
+      v-if="authStore.isLoggedIn"
       v-model="savedScenesDrawerVisible"
       title="已保存场景"
       :with-header="true"
