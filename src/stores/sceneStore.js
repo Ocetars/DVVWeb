@@ -53,6 +53,7 @@ export const useSceneStore = defineStore('scene', {
       }
 
       try {
+        console.log('userID:', authStore.user.id);
         const scenesResponse = await getScenes(authStore.user.id);
         // 添加数据格式检查，确保返回值符合预期格式
         if (!scenesResponse || !scenesResponse.data || !Array.isArray(scenesResponse.data)) {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { useUser } from '@clerk/vue'
+import { ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -7,19 +7,18 @@ export const useAuthStore = defineStore('auth', {
     user: null,
   }),
   actions: {
-    setUser() {
-      const { isLoaded, isSignedIn, user } = useUser();
-      if (isLoaded && isSignedIn) {
-        this.isLoggedIn = true;
-        this.user = user;
+    setUser(userData) {
+      if (userData) {
+        this.isLoggedIn = true
+        this.user = userData
       } else {
-        this.isLoggedIn = false;
-        this.user = null;
+        this.isLoggedIn = false
+        this.user = null
       }
     },
     clearUser() {
-      this.isLoggedIn = false;
-      this.user = null;
+      this.isLoggedIn = false
+      this.user = null
     }
   }
 }) 

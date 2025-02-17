@@ -9,6 +9,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useSceneStore } from '@/stores/sceneStore'
 import { useAuthStore } from '@/stores/authStore'
 import { Delete, Refresh } from '@element-plus/icons-vue'
+import { useUser } from '@clerk/vue'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -33,6 +34,41 @@ const currentTexture = ref('')               // 保存当前地面纹理的 URL
 const savedScenesDrawerVisible = ref(false)    // 控制保存场景抽屉的显示
 
 const authStore = useAuthStore()
+
+const { isSignedIn, user, isLoaded } = useUser()
+
+// 监听用户状态变化
+watch([isLoaded, isSignedIn, user], () => {
+  if (isLoaded.value) {
+    if (isSignedIn.value && user.value) {
+      authStore.setUser(user.value)
+      // 如果用户已登录，加载场景
+      loadScenesAfterLogin()
+    } else {
+      authStore.clearUser()
+      console.log('用户未登录')
+    }
+  }
+})
+
+// 将场景加载逻辑抽取为单独的函数
+const loadScenesAfterLogin = async () => {
+  try {
+    console.log('第一次尝试加载场景')
+    await sceneStore.fetchScenes()
+  } catch (error) {
+    console.log('第一次加载失败，3秒后重试')
+    setTimeout(async () => {
+      try {
+        console.log('第二次尝试加载场景')
+        await sceneStore.fetchScenes()
+      } catch (retryError) {
+        console.log('第二次加载失败')
+        ElMessage.warning('场景加载失败，您可以手动更新场景')
+      }
+    }, 3000)
+  }
+}
 
 function onUploadImage(file) {
   if (file) {
@@ -150,28 +186,13 @@ function handleStopCode() {
   }
 }
 
-// 新增：在组件挂载后检查用户登录状态
+// 修改 onMounted 钩子
 onMounted(() => {
-  authStore.setUser()
-  // 如果用户已登录，则2秒后加载场景
-  if (authStore.isLoggedIn) {
-    setTimeout(async () => {
-      try {
-        console.log('第一次尝试加载场景')
-        await sceneStore.fetchScenes()
-      } catch (error) {
-        console.log('第一次加载失败，3秒后重试')
-        // 如果第一次失败，3秒后重试
-        setTimeout(async () => {
-          try {
-            console.log('第二次尝试加载场景')
-            await sceneStore.fetchScenes()
-          } catch (retryError) {
-            console.log('第二次加载失败')
-            ElMessage.warning('场景加载失败，您可以手动更新场景')
-          }
-        }, 3000)
-      }
+  // 不需要手动调用 setUser，watch 会处理用户状态变化
+  if (isLoaded.value && isSignedIn.value && user.value) {
+    authStore.setUser(user.value)
+    setTimeout(() => {
+      loadScenesAfterLogin()
     }, 2000)
   }
 })
