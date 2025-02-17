@@ -14,13 +14,16 @@ export const useSceneStore = defineStore('scene', {
         return;
       }
 
-      // 添加 userId 字段
-      scene.userId = authStore.user.id;
+      // 确保 texture 已经是 base64 格式
+      const sceneData = {
+        ...scene,
+        userId: authStore.user.id,
+        texture: scene.texture // 此时 texture 应该已经是 base64 格式
+      };
 
       try {
-        const savedScene = await saveScene(scene);
-        // 使用当前时间戳作为 id 保证唯一
-        savedScene.data.id = Date.now()
+        const savedScene = await saveScene(sceneData);
+        savedScene.data.id = Date.now();
         this.scenes.push(savedScene.data);
       } catch (error) {
         console.error('Error saving scene:', error);

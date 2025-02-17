@@ -37,11 +37,18 @@ const authStore = useAuthStore()
 function onUploadImage(file) {
   if (file) {
     if (file instanceof File) {
-      currentTexture.value = URL.createObjectURL(file)
-    } else if (typeof file === 'string') {
-      currentTexture.value = file
+      // 将文件转换为 base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentTexture.value = e.target.result;
+        threeScene.value.handleImageUpload(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else if (typeof file === 'string' && file.startsWith('data:image')) {
+      // 如果已经是 base64 格式，直接使用
+      currentTexture.value = file;
+      threeScene.value.handleImageUpload(file);
     }
-    threeScene.value.handleImageUpload(file)
   }
 }
 

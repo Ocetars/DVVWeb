@@ -60,11 +60,10 @@ export class Ground {
 
   // 处理图片上传
   handleImageUpload(file, callback) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target.result;
+    if (typeof file === 'string' && file.startsWith('data:image')) {
+      // 如果已经是 base64 格式，直接使用
       const loader = new THREE.TextureLoader();
-      loader.load(imageUrl, (texture) => {
+      loader.load(file, (texture) => {
         texture.needsUpdate = true;
         this.updateTexture(texture);
       });
@@ -76,8 +75,28 @@ export class Ground {
           callback(aspect);
         }
       };
-      img.src = imageUrl;
-    };
-    reader.readAsDataURL(file);
+      img.src = file;
+    } else if (file instanceof File) {
+      // 如果是文件对象，转换为 base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Data = e.target.result;
+        const loader = new THREE.TextureLoader();
+        loader.load(base64Data, (texture) => {
+          texture.needsUpdate = true;
+          this.updateTexture(texture);
+        });
+
+        const img = new Image();
+        img.onload = () => {
+          const aspect = img.naturalWidth / img.naturalHeight;
+          if (callback) {
+            callback(aspect);
+          }
+        };
+        img.src = base64Data;
+      };
+      reader.readAsDataURL(file);
+    }
   }
 } 
