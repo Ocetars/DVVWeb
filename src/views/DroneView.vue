@@ -153,9 +153,26 @@ function handleStopCode() {
 // 新增：在组件挂载后检查用户登录状态
 onMounted(() => {
   authStore.setUser()
-  // 如果用户已登录，则加载场景
+  // 如果用户已登录，则2秒后加载场景
   if (authStore.isLoggedIn) {
-    sceneStore.fetchScenes()
+    setTimeout(async () => {
+      try {
+        console.log('第一次尝试加载场景')
+        await sceneStore.fetchScenes()
+      } catch (error) {
+        console.log('第一次加载失败，3秒后重试')
+        // 如果第一次失败，3秒后重试
+        setTimeout(async () => {
+          try {
+            console.log('第二次尝试加载场景')
+            await sceneStore.fetchScenes()
+          } catch (retryError) {
+            console.log('第二次加载失败')
+            ElMessage.warning('场景加载失败，您可以手动更新场景')
+          }
+        }, 3000)
+      }
+    }, 2000)
   }
 })
 

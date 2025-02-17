@@ -47,17 +47,28 @@ export const useSceneStore = defineStore('scene', {
     async fetchScenes() {
       const authStore = useAuthStore();
       if (!authStore.isLoggedIn) {
-        console.warn('User not logged in. Cannot fetch scenes.');
+        console.warn('用户未登录，无法获取场景数据。');
         this.scenes = []; // 用户未登录时清空场景列表
         return;
       }
 
       try {
-        const scenesData = await getScenes(authStore.user.id);
-        this.scenes = scenesData.data;
+        const scenesResponse = await getScenes(authStore.user.id);
+        // 添加数据格式检查，确保返回值符合预期格式
+        if (!scenesResponse || !scenesResponse.data || !Array.isArray(scenesResponse.data)) {
+          console.warn('数据库返回的数据格式错误:', scenesResponse);
+          this.scenes = [];
+          ElMessage.error('场景数据格式错误，请检查数据库接口');
+          throw new Error('数据格式错误');
+        }
+        this.scenes = scenesResponse.data;
+        console.log('Scenes fetched:', this.scenes);
+        ElMessage.success('场景加载成功');
       } catch (error) {
         console.error('Error fetching scenes:', error);
         this.scenes = []; // 获取失败时也清空
+        ElMessage.error('获取场景列表失败，请检查数据库连接');
+        throw error; // 确保错误被抛出
       }
     }
   }
