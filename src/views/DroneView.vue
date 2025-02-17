@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
-import { ElDrawer, ElContainer, ElMain, ElFooter, ElMessage } from 'element-plus'
+import { ElDrawer, ElContainer, ElMain, ElFooter, ElMessage, ElMessageBox } from 'element-plus'
 import ThreeScene from '@/components/ThreeScene.vue'
 import GroundControls from '@/components/GroundControls.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -8,6 +8,7 @@ import CodeEditor from '@/components/CodeEditor.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useSceneStore } from '@/stores/sceneStore'
 import { useAuthStore } from '@/stores/authStore'
+import { Delete } from '@element-plus/icons-vue'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -178,6 +179,27 @@ async function loadScene(scene) {
   savedScenesDrawerVisible.value = false
 }
 
+// 添加删除场景的方法
+async function handleDeleteScene(sceneId) {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这个场景吗？',
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    await sceneStore.removeScene(sceneId)
+    ElMessage.success('场景已删除')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除场景失败')
+    }
+  }
+}
+
 // 将计时状态传递给 GroundControls
 </script>
 
@@ -233,10 +255,19 @@ async function loadScene(scene) {
           v-for="scene in sceneStore.scenes" 
           :key="scene.id" 
           class="scene-item"
-          @click="loadScene(scene)"
         >
-          <img :src="scene.texture" alt="场景预览" class="scene-preview" />
-          <div>宽: {{ scene.groundWidth }} m, 深: {{ scene.groundDepth }} m</div>
+          <div class="scene-content" @click="loadScene(scene)">
+            <img :src="scene.texture" alt="场景预览" class="scene-preview" />
+            <div>宽: {{ scene.groundWidth }} m, 深: {{ scene.groundDepth }} m</div>
+          </div>
+          <el-button
+            type="danger"
+            size="small"
+            class="delete-btn"
+            @click.stop="handleDeleteScene(scene._id)"
+          >
+            <el-icon><Delete /></el-icon>
+          </el-button>
         </div>
       </div>
     </el-drawer>
@@ -417,11 +448,23 @@ async function loadScene(scene) {
 .scene-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 8px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.scene-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.delete-btn {
+  flex-shrink: 0;
 }
 
 .scene-item:hover {

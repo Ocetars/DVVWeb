@@ -35,9 +35,10 @@ export const useSceneStore = defineStore('scene', {
 
       try {
         await deleteScene(sceneId);
-        this.scenes = this.scenes.filter(scene => scene.id !== sceneId);
+        this.scenes = this.scenes.filter(scene => scene._id !== sceneId);
       } catch (error) {
         console.error('Error removing scene:', error);
+        throw error; // 抛出错误以便上层组件处理
       }
     },
     async fetchScenes() {
