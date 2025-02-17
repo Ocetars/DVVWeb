@@ -292,18 +292,25 @@ async function refreshScenes() {
     </el-footer>
 
     <!-- 代码编辑器抽屉 -->
-    <el-drawer v-model="drawerVisible" title="代码编辑器" size="80%" direction="ttb">
+    <el-drawer 
+      v-model="drawerVisible" 
+      title="代码编辑器" 
+      size="80%" 
+      direction="ttb"
+      class="code-editor-drawer"
+    >
       <CodeEditor ref="codeEditor" @execute-code="onExecuteCodeFromEditor" />
     </el-drawer>
 
-    <!-- 仅在用户登录时显示已保存场景抽屉 -->
+    <!-- 场景管理器抽屉 -->
     <el-drawer
       v-if="authStore.isLoggedIn"
       v-model="savedScenesDrawerVisible"
       title="已保存场景"
       :with-header="true"
       direction="rtl"
-      size="30%"
+      size="400px"
+      class="scene-manager-drawer"
     >
       <template #header>
         <div class="drawer-header">
@@ -564,5 +571,124 @@ async function refreshScenes() {
 :deep(.el-drawer__header) {
   padding: 16px 0;
   margin-bottom: 0;
+}
+
+/* 修改：区分代码编辑器抽屉和场景管理器抽屉的样式 */
+:deep(.code-editor-drawer.el-drawer) {
+  background: #1e1e1e;
+}
+
+:deep(.code-editor-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 70px;
+  background: #333333;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  height: 28px;
+  position: relative;
+}
+
+:deep(.code-editor-drawer .el-drawer__close-btn) {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(255, 255, 255);
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.code-editor-drawer .el-drawer__close-btn:hover) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 新增：场景管理器抽屉的样式 */
+:deep(.scene-manager-drawer.el-drawer) {
+  background: #ffffff;
+}
+
+:deep(.scene-manager-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  background: #f5f7fa;
+  color: #303133;
+  font-weight: 600;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.scene-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scene-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.scene-item:hover {
+  background-color: #f5f7fa;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.scene-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.refresh-btn {
+  margin-right: 40px;
+}
+
+/* 修改场景管理器抽屉的关闭按钮样式 */
+:deep(.scene-manager-drawer .el-drawer__close-btn) {
+  color: #303133;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.scene-manager-drawer .el-drawer__close-btn:hover) {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #970a0a;
 }
 </style> 

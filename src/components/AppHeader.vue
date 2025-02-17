@@ -147,6 +147,7 @@ const updateDrawerVisible = (value) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  /* margin-right: 12px; */
 }
 
 .header-icon-btn {
@@ -154,7 +155,7 @@ const updateDrawerVisible = (value) => {
   border: none;
   background: transparent;
   font-size: 20px;
-  color: #606266;
+  color: #374560;
   transition: all 0.3s ease;
 }
 
@@ -177,15 +178,24 @@ const updateDrawerVisible = (value) => {
 
 /* Clerk 组件样式调整 */
 :deep(.cl-userButtonBox) {
-  height: 36px;
+  height: 40px;
 }
 
 :deep(.cl-userButtonTrigger) {
-  padding: 0 8px;
+  padding: 0 20px;
+  /* 移除或修改点击时的圆圈效果 */
+  &:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  &:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 :deep(.cl-userButtonAvatarBox) {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
 }
 </style> 
