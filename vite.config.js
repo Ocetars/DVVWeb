@@ -35,6 +35,6 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1000 // 可选：调整警告限制
+    chunkSizeWarningLimit: 5000 // 可选：调整警告限制
   }
 })
