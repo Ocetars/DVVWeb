@@ -8,7 +8,7 @@ import CodeEditor from '@/components/CodeEditor.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useSceneStore } from '@/stores/sceneStore'
 import { useAuthStore } from '@/stores/authStore'
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, Refresh } from '@element-plus/icons-vue'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -200,6 +200,16 @@ async function handleDeleteScene(sceneId) {
   }
 }
 
+// 添加刷新场景列表的方法
+async function refreshScenes() {
+  try {
+    await sceneStore.fetchScenes()
+    ElMessage.success('场景列表已更新')
+  } catch (error) {
+    ElMessage.error('获取场景列表失败')
+  }
+}
+
 // 将计时状态传递给 GroundControls
 </script>
 
@@ -250,6 +260,18 @@ async function handleDeleteScene(sceneId) {
       direction="rtl"
       size="30%"
     >
+      <template #header>
+        <div class="drawer-header">
+          <span>已保存场景</span>
+          <el-button
+            type="primary"
+            :icon="Refresh"
+            circle
+            @click="refreshScenes"
+            class="refresh-btn"
+          />
+        </div>
+      </template>
       <div class="scene-list">
         <div 
           v-for="scene in sceneStore.scenes" 
@@ -476,5 +498,26 @@ async function handleDeleteScene(sceneId) {
   height: 60px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+/* 添加抽屉头部样式 */
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.refresh-btn {
+  padding: 8px;
+  font-size: 16px;
+  margin-right: 50px;
+}
+
+/* 确保抽屉标题样式正确 */
+:deep(.el-drawer__header) {
+  padding: 16px 0;
+  margin-bottom: 0;
 }
 </style> 
