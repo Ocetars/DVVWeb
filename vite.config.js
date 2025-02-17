@@ -24,17 +24,6 @@ export default defineConfig({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // 将opencv相关代码分割到单独的chunk
-          if (id.includes('opencv')) {
-            return 'opencv'
-          }
-          // 其他大型依赖也可以单独分割
-        }
-      }
-    },
-    chunkSizeWarningLimit: 5000 // 可选：调整警告限制
+    chunkSizeWarningLimit: 5000 // 调整为2000kb
   }
 })

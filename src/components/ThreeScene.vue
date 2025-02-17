@@ -206,7 +206,7 @@ function loadSceneTexture(url) {
 onMounted(() => {
   // 加载 OpenCV.js 脚本
   const script = document.createElement('script')
-  script.src = 'src/assets/opencv.js'
+  script.src = '/opencv.js'
   script.async = true
   script.onload = () => {
     console.log('OpenCV.js 加载完成')
