@@ -70,7 +70,8 @@ export class Ground {
 
       const img = new Image();
       img.onload = () => {
-        const aspect = img.naturalWidth / img.naturalHeight;
+        // 将比例精确到小数点后两位
+        const aspect = Math.round((img.naturalWidth / img.naturalHeight) * 100) / 100;
         if (callback) {
           callback(aspect);
         }
@@ -89,7 +90,8 @@ export class Ground {
 
         const img = new Image();
         img.onload = () => {
-          const aspect = img.naturalWidth / img.naturalHeight;
+          // 将比例精确到小数点后两位
+          const aspect = Math.round((img.naturalWidth / img.naturalHeight) * 100) / 100;
           if (callback) {
             callback(aspect);
           }

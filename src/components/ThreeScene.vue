@@ -43,12 +43,12 @@ function updateGroundGeometry() {
 function handleImageUpload(file) {
   if (ground) {
     ground.handleImageUpload(file, (aspect) => {
-      // 将比例精确到小数点后两位
-      const roundedAspect = Math.round(aspect * 100) / 100
       // 根据当前 groundDepth 计算新的宽度，并通过事件通知父组件
-      emit('update-ground-dimensions', { groundWidth: props.groundDepth * roundedAspect })
-      updateGroundGeometry()
-    })
+      // 将计算结果精确到小数点后两位
+      const newWidth = Math.round(props.groundDepth * aspect * 100) / 100;
+      emit('update-ground-dimensions', { groundWidth: newWidth });
+      updateGroundGeometry();
+    });
   }
 }
 
