@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api', // 根据你的后端API地址配置
+  baseURL: 'https://drone-pilot-backend.vercel.app/api', // 根据你的后端API地址配置
   headers: {
     'Content-Type': 'application/json',
   },
