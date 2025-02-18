@@ -8,7 +8,7 @@ import CodeEditor from '@/components/CodeEditor.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useSceneStore } from '@/stores/sceneStore'
 import { useAuthStore } from '@/stores/authStore'
-import { Delete, Switch } from '@element-plus/icons-vue'
+import { Delete, RefreshLeft } from '@element-plus/icons-vue'
 import { useUser } from '@clerk/vue'
 
 const groundWidth = ref(2)
@@ -204,6 +204,12 @@ async function saveCurrentScene() {
     return
   }
 
+  // 在弹出对话框之前，确保 currentTexture 已赋值
+  if (!currentTexture.value && threeScene.value && threeScene.value.getDefaultTextureData) {
+    // 如果没有手动上传纹理，则使用默认纹理的 Base64 数据
+    currentTexture.value = threeScene.value.getDefaultTextureData() || '';
+  }
+
   // 弹出对话框，让用户输入场景名称
   try {
     const sceneName = await ElMessageBox.prompt('请输入场景名称', '保存场景', {
@@ -220,7 +226,7 @@ async function saveCurrentScene() {
         groundDepth: groundDepth.value,
         texture: currentTexture.value
       })
-      ElMessage.success('场景已保存')
+      // ElMessage.success('场景已保存')
     }
   } catch (error) {
     // 用户取消了输入
@@ -344,7 +350,7 @@ function formatDate(dateString) {
         <div class="drawer-header">
           <span>已保存场景</span>
           <el-tooltip content="更新场景" placement="bottom" effect="dark">
-            <el-button class="refresh-btn" :icon="Switch" @click="refreshScenes" />
+            <el-button class="refresh-btn" :icon="RefreshLeft" @click="refreshScenes" />
           </el-tooltip>
         </div>
       </template>

@@ -25,8 +25,10 @@ export const useSceneStore = defineStore('scene', {
         const savedScene = await saveScene(sceneData);
         // savedScene.data.id = Date.now(); // 不需要手动设置id，数据库会自动生成_id
         this.scenes.push(savedScene.data);
+        ElMessage.success('场景保存成功');
       } catch (error) {
         console.error('Error saving scene:', error);
+        ElMessage.error('保存场景失败，请检查图片格式');
       }
     },
     async removeScene(sceneId) {
@@ -53,7 +55,7 @@ export const useSceneStore = defineStore('scene', {
       }
 
       try {
-        console.log('userID:', authStore.user.id);
+        // console.log('userID:', authStore.user.id);
         const scenesResponse = await getScenes(authStore.user.id);
         // 添加数据格式检查，确保返回值符合预期格式
         if (!scenesResponse || !scenesResponse.data || !Array.isArray(scenesResponse.data)) {
@@ -62,7 +64,8 @@ export const useSceneStore = defineStore('scene', {
           ElMessage.error('场景数据格式错误，请检查数据库接口');
           throw new Error('数据格式错误');
         }
-        this.scenes = scenesResponse.data;
+        // 按照创建时间降序排序：最新的场景排在最前面
+        this.scenes = scenesResponse.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         console.log('Scenes fetched:', this.scenes);
         ElMessage.success('场景加载成功');
       } catch (error) {

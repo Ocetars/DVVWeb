@@ -13,15 +13,22 @@ export class Ground {
     this.init();
   }
 
-  // 获取默认灰色纹理
+  // 获取默认纹理，从 '/textures/Logo_orgin.png' 加载默认纹理
   getDefaultTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const context = canvas.getContext('2d');
-    context.fillStyle = 'white';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    return new THREE.CanvasTexture(canvas);
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('/textures/Logo_orgin.png', (loadedTexture) => {
+      if (loadedTexture.image) {
+        // 利用 canvas 将加载的图片转换为 Base64 数据
+        const canvas = document.createElement('canvas');
+        canvas.width = loadedTexture.image.width;
+        canvas.height = loadedTexture.image.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(loadedTexture.image, 0, 0);
+        // 将默认纹理的 Base64 数据保存到实例变量中，方便后续使用
+        this.defaultTextureData = canvas.toDataURL('image/png');
+      }
+    });
+    return texture;
   }
 
   init() {

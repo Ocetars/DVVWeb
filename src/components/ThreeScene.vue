@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
 import { Ground } from '@/components/utils/Ground.js'
 import { ElIcon } from 'element-plus'
-import { Refresh, DocumentChecked, Fold } from '@element-plus/icons-vue'
+import { VideoCamera, DocumentChecked, Fold } from '@element-plus/icons-vue'
 import { gsap } from 'gsap'
 
 const props = defineProps({
@@ -342,7 +342,11 @@ defineExpose({
   enterCustomPositionMode,
   resetCamera,
   resetDronePosition,
-  loadSceneTexture
+  loadSceneTexture,
+  // 新增：获取默认纹理 Base64 数据
+  getDefaultTextureData() {
+    return ground.defaultTextureData;
+  }
 })
 </script>
 
@@ -357,7 +361,7 @@ defineExpose({
       <el-tooltip content="重置视角" placement="bottom">
         <div class="control-btn" @click="resetCamera">
           <el-icon :size="20">
-            <Refresh />
+            <VideoCamera />
           </el-icon>
         </div>
       </el-tooltip>
