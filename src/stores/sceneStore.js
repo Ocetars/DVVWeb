@@ -23,7 +23,7 @@ export const useSceneStore = defineStore('scene', {
 
       try {
         const savedScene = await saveScene(sceneData);
-        savedScene.data.id = Date.now();
+        // savedScene.data.id = Date.now(); // 不需要手动设置id，数据库会自动生成_id
         this.scenes.push(savedScene.data);
       } catch (error) {
         console.error('Error saving scene:', error);
