@@ -4,6 +4,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { clerkPlugin } from '@clerk/vue'
+import { inject } from '@vercel/analytics'
 
 import App from './App.vue'
 import router from './router'
@@ -26,5 +27,8 @@ app.use(clerkPlugin, {
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
+
+// 注入 Vercel Analytics
+inject()
 
 app.mount('#app')
