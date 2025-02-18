@@ -28,7 +28,10 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// 注入 Vercel Analytics
-inject()
+// 注入 Vercel Analytics，使用 auto 模式
+inject({
+  mode: 'auto',
+  debug: true
+})
 
 app.mount('#app')
