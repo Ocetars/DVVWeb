@@ -5,6 +5,7 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { clerkPlugin } from '@clerk/vue'
 import { inject } from '@vercel/analytics'
+import { SpeedInsights } from "@vercel/speed-insights/vue"
 
 import App from './App.vue'
 import router from './router'
@@ -33,5 +34,8 @@ inject({
   mode: 'auto',
   debug: true
 })
+
+// 注入 Speed Insights
+SpeedInsights()
 
 app.mount('#app')
