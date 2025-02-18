@@ -4,6 +4,7 @@
 
 <template>
   <router-view />
+  <SpeedInsights />
 </template>
 
 <style scoped>

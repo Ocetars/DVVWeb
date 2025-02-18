@@ -29,13 +29,13 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
+// 注册 Speed Insights 组件
+app.component('SpeedInsights', SpeedInsights)
+
 // 注入 Vercel Analytics，使用 auto 模式
 inject({
   mode: 'auto',
   debug: true
 })
-
-// 注入 Speed Insights
-SpeedInsights()
 
 app.mount('#app')
