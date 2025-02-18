@@ -13,15 +13,22 @@ export class Ground {
     this.init();
   }
 
-  // 获取默认灰色纹理
+  // 获取默认纹理，从 '/textures/Logo_orgin.png' 加载默认纹理
   getDefaultTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const context = canvas.getContext('2d');
-    context.fillStyle = 'white';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    return new THREE.CanvasTexture(canvas);
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('/textures/Logo_orgin.png', (loadedTexture) => {
+      if (loadedTexture.image) {
+        // 利用 canvas 将加载的图片转换为 Base64 数据
+        const canvas = document.createElement('canvas');
+        canvas.width = loadedTexture.image.width;
+        canvas.height = loadedTexture.image.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(loadedTexture.image, 0, 0);
+        // 将默认纹理的 Base64 数据保存到实例变量中，方便后续使用
+        this.defaultTextureData = canvas.toDataURL('image/png');
+      }
+    });
+    return texture;
   }
 
   init() {
@@ -60,24 +67,45 @@ export class Ground {
 
   // 处理图片上传
   handleImageUpload(file, callback) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target.result;
+    if (typeof file === 'string' && file.startsWith('data:image')) {
+      // 如果已经是 base64 格式，直接使用
       const loader = new THREE.TextureLoader();
-      loader.load(imageUrl, (texture) => {
+      loader.load(file, (texture) => {
         texture.needsUpdate = true;
         this.updateTexture(texture);
       });
 
       const img = new Image();
       img.onload = () => {
-        const aspect = img.naturalWidth / img.naturalHeight;
+        // 将比例精确到小数点后两位
+        const aspect = Math.round((img.naturalWidth / img.naturalHeight) * 100) / 100;
         if (callback) {
           callback(aspect);
         }
       };
-      img.src = imageUrl;
-    };
-    reader.readAsDataURL(file);
+      img.src = file;
+    } else if (file instanceof File) {
+      // 如果是文件对象，转换为 base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Data = e.target.result;
+        const loader = new THREE.TextureLoader();
+        loader.load(base64Data, (texture) => {
+          texture.needsUpdate = true;
+          this.updateTexture(texture);
+        });
+
+        const img = new Image();
+        img.onload = () => {
+          // 将比例精确到小数点后两位
+          const aspect = Math.round((img.naturalWidth / img.naturalHeight) * 100) / 100;
+          if (callback) {
+            callback(aspect);
+          }
+        };
+        img.src = base64Data;
+      };
+      reader.readAsDataURL(file);
+    }
   }
 } 

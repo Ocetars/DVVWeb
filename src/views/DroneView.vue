@@ -1,12 +1,15 @@
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue'
-import { ElDrawer, ElContainer, ElMain, ElFooter, ElMessage } from 'element-plus'
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
+import { ElDrawer, ElContainer, ElMain, ElFooter, ElMessage, ElMessageBox } from 'element-plus'
 import ThreeScene from '@/components/ThreeScene.vue'
 import GroundControls from '@/components/GroundControls.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 // 导入 AppHeader 组件
 import AppHeader from '@/components/AppHeader.vue'
 import { useSceneStore } from '@/stores/sceneStore'
+import { useAuthStore } from '@/stores/authStore'
+import { Delete, RefreshLeft } from '@element-plus/icons-vue'
+import { useUser } from '@clerk/vue'
 
 const groundWidth = ref(2)
 const groundDepth = ref(2)
@@ -30,14 +33,58 @@ const sceneStore = useSceneStore()
 const currentTexture = ref('')               // 保存当前地面纹理的 URL
 const savedScenesDrawerVisible = ref(false)    // 控制保存场景抽屉的显示
 
+const authStore = useAuthStore()
+
+const { isSignedIn, user, isLoaded } = useUser()
+
+// 监听用户状态变化
+watch([isLoaded, isSignedIn, user], () => {
+  if (isLoaded.value) {
+    if (isSignedIn.value && user.value) {
+      authStore.setUser(user.value)
+      // 如果用户已登录，加载场景
+      loadScenesAfterLogin()
+    } else {
+      authStore.clearUser()
+      console.log('用户未登录')
+    }
+  }
+})
+
+// 将场景加载逻辑抽取为单独的函数
+const loadScenesAfterLogin = async () => {
+  try {
+    console.log('第一次尝试加载场景')
+    await sceneStore.fetchScenes()
+  } catch (error) {
+    console.log('第一次加载失败，3秒后重试')
+    setTimeout(async () => {
+      try {
+        console.log('第二次尝试加载场景')
+        await sceneStore.fetchScenes()
+      } catch (retryError) {
+        console.log('第二次加载失败')
+        ElMessage.warning('场景加载失败，您可以手动更新场景')
+      }
+    }, 3000)
+  }
+}
+
 function onUploadImage(file) {
   if (file) {
     if (file instanceof File) {
-      currentTexture.value = URL.createObjectURL(file)
-    } else if (typeof file === 'string') {
-      currentTexture.value = file
+      // 将文件转换为 base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentTexture.value = e.target.result;
+        threeScene.value.handleImageUpload(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else if (typeof file === 'string' && file.startsWith('data:image')) {
+      // 如果已经是 base64 格式，直接使用
+      currentTexture.value = file;
+      threeScene.value.handleImageUpload(file);
     }
-    threeScene.value.handleImageUpload(file)
   }
 }
 
@@ -139,23 +186,107 @@ function handleStopCode() {
   }
 }
 
-// 新增：保存当前场景到 pinia store
-function saveCurrentScene() {
-  sceneStore.addScene({
-    groundWidth: groundWidth.value,
-    groundDepth: groundDepth.value,
-    texture: currentTexture.value
-  })
-  ElMessage.success('场景已保存')
+// 修改 onMounted 钩子
+onMounted(() => {
+  // 不需要手动调用 setUser，watch 会处理用户状态变化
+  if (isLoaded.value && isSignedIn.value && user.value) {
+    authStore.setUser(user.value)
+    setTimeout(() => {
+      loadScenesAfterLogin()
+    }, 2000)
+  }
+})
+
+// 修改：保存当前场景到 pinia store
+async function saveCurrentScene() {
+  if (!authStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
+
+  // 在弹出对话框之前，确保 currentTexture 已赋值
+  if (!currentTexture.value && threeScene.value && threeScene.value.getDefaultTextureData) {
+    // 如果没有手动上传纹理，则使用默认纹理的 Base64 数据
+    currentTexture.value = threeScene.value.getDefaultTextureData() || '';
+  }
+
+  // 弹出对话框，让用户输入场景名称
+  try {
+    const sceneName = await ElMessageBox.prompt('请输入场景名称', '保存场景', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /.+/, // 确保名称不为空
+      inputErrorMessage: '场景名称不能为空',
+    })
+
+    if (sceneName.value) {
+      sceneStore.addScene({
+        name: sceneName.value, // 添加场景名称
+        groundWidth: groundWidth.value,
+        groundDepth: groundDepth.value,
+        texture: currentTexture.value
+      })
+      // ElMessage.success('场景已保存')
+    }
+  } catch (error) {
+    // 用户取消了输入
+  }
 }
 
-// 新增：加载保存的场景
-function loadScene(scene) {
+// 修改：加载保存的场景
+async function loadScene(scene) {
+  if (!authStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
   groundWidth.value = scene.groundWidth
   groundDepth.value = scene.groundDepth
   threeScene.value.loadSceneTexture(scene.texture)
   ElMessage.success('场景加载成功')
   savedScenesDrawerVisible.value = false
+}
+
+// 添加删除场景的方法
+async function handleDeleteScene(sceneId) {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这个场景吗？',
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    await sceneStore.removeScene(sceneId)
+    ElMessage.success('场景已删除')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除场景失败')
+    }
+  }
+}
+
+// 添加刷新场景列表的方法
+async function refreshScenes() {
+  try {
+    await sceneStore.fetchScenes()
+    ElMessage.success('场景列表已更新')
+  } catch (error) {
+    ElMessage.error('获取场景列表失败')
+  }
+}
+
+// 修改 formatDate 函数，精确到分钟
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 // 将计时状态传递给 GroundControls
@@ -195,27 +326,56 @@ function loadScene(scene) {
     </el-footer>
 
     <!-- 代码编辑器抽屉 -->
-    <el-drawer v-model="drawerVisible" title="代码编辑器" size="80%" direction="ttb">
+    <el-drawer 
+      v-model="drawerVisible" 
+      title="代码编辑器" 
+      size="80%" 
+      direction="ttb"
+      class="code-editor-drawer"
+    >
       <CodeEditor ref="codeEditor" @execute-code="onExecuteCodeFromEditor" />
     </el-drawer>
 
-    <!-- 新增：右侧抽屉展示已保存场景 -->
+    <!-- 场景管理器抽屉 -->
     <el-drawer
+      v-if="authStore.isLoggedIn"
       v-model="savedScenesDrawerVisible"
       title="已保存场景"
       :with-header="true"
       direction="rtl"
-      size="30%"
+      size="400px"
+      class="scene-manager-drawer"
     >
+      <template #header>
+        <div class="drawer-header">
+          <span>已保存场景</span>
+          <el-tooltip content="更新场景" placement="bottom" effect="dark">
+            <el-button class="refresh-btn" :icon="RefreshLeft" @click="refreshScenes" />
+          </el-tooltip>
+        </div>
+      </template>
       <div class="scene-list">
         <div 
           v-for="scene in sceneStore.scenes" 
           :key="scene.id" 
           class="scene-item"
-          @click="loadScene(scene)"
         >
-          <img :src="scene.texture" alt="场景预览" class="scene-preview" />
-          <div>宽: {{ scene.groundWidth }} m, 深: {{ scene.groundDepth }} m</div>
+          <div class="scene-content" @click="loadScene(scene)">
+            <img :src="scene.texture" alt="场景预览" class="scene-preview" />
+            <div class="scene-info">
+              <div class="scene-name">{{ scene.name }}</div>
+              <div class="scene-dimensions">尺寸：{{ scene.groundWidth }}m × {{ scene.groundDepth }}m</div>
+              <div class="scene-created-at">{{ formatDate(scene.createdAt) }}</div>
+            </div>
+          </div>
+          <el-button
+            type="danger"
+            size="small"
+            class="delete-btn"
+            @click.stop="handleDeleteScene(scene._id)"
+          >
+            <el-icon><Delete /></el-icon>
+          </el-button>
         </div>
       </div>
     </el-drawer>
@@ -396,21 +556,233 @@ function loadScene(scene) {
 .scene-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
   cursor: pointer;
+  position: relative; /* 添加相对定位 */
+  overflow: hidden; /* 防止删除按钮溢出 */
+}
+
+.scene-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  padding-right: 40px; /* 为删除按钮预留空间 */
+}
+
+/* 修改删除按钮样式 */
+.delete-btn {
+  opacity: 0; /* 默认隐藏 */
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background-color: rgba(245, 108, 108, 0.9);
+  color: white;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.delete-btn:hover {
+  background-color: rgb(245, 108, 108);
+}
+
+/* 当鼠标悬停在场景项上时显示删除按钮 */
+.scene-item:hover .delete-btn {
+  opacity: 1;
+}
+
+/* 修改场景内容样式，为删除按钮留出空间 */
+.scene-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  padding-right: 40px; /* 为删除按钮预留空间 */
+}
+
+/* 优化场景项的悬停效果 */
+.scene-item:hover {
+  background-color: #f5f7fa;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.scene-item:hover .scene-content {
+  opacity: 0.8; /* 当鼠标悬停时，轻微降低内容透明度 */
+}
+
+/* 添加抽屉头部样式 */
+/* .drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;                  
+  width: 100%;
+  padding: 0 20px;
+} */
+
+.refresh-btn {
+  padding: 12px;
+  font-size: 16px;
+  margin-right: 20px;
+}
+
+/* 确保抽屉标题样式正确 */
+:deep(.el-drawer__header) {
+  padding: 16px 0;
+  margin-bottom: 0;
+}
+
+/* 修改：区分代码编辑器抽屉和场景管理器抽屉的样式 */
+:deep(.code-editor-drawer.el-drawer) {
+  background: #1e1e1e;
+}
+
+:deep(.code-editor-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 70px;
+  background: #333333;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  height: 28px;
+  position: relative;
+}
+
+:deep(.code-editor-drawer .el-drawer__close-btn) {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(255, 255, 255);
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.code-editor-drawer .el-drawer__close-btn:hover) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 新增：场景管理器抽屉的样式 */
+:deep(.scene-manager-drawer.el-drawer) {
+  background: #ffffff;
+}
+
+:deep(.scene-manager-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  background: #f5f7fa;
+  color: #303133;
+  font-weight: 600;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.scene-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scene-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
 }
 
 .scene-item:hover {
   background-color: #f5f7fa;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .scene-preview {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;  /* 让内容整体靠左 */
+  gap: 20px;                   /* 添加按钮与标题之间的间距 */
+  width: 100%;
+  padding: 0 20px;
+  margin-left: 5px;
+}
+
+.refresh-btn {
+  margin-right: 40px;
+}
+
+/* 修改场景管理器抽屉的关闭按钮样式 */
+:deep(.scene-manager-drawer .el-drawer__close-btn) {
+  color: #303133;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.scene-manager-drawer .el-drawer__close-btn:hover) {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #970a0a;
+}
+
+/* 调整场景信息样式 */
+.scene-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* 增大行距 */
+}
+
+.scene-name {
+  font-weight: bold; /* 加粗场景名称 */
+}
+
+.scene-dimensions{
+    color: #909399;
+}
+
+.scene-created-at {
+  color: #909399; /* 可以给时间设置一个不同的颜色 */
 }
 </style> 

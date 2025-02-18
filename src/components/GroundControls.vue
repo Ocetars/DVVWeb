@@ -76,16 +76,18 @@ function handleCustomPosition() {
   emit('custom-position')
 }
 
-// 添加选择预设地面的方法
+// 修改选择预设地面的方法
 function selectPresetGround(imageUrl) {
-  // 创建一个 fetch 请求来获取图片
   fetch(imageUrl)
     .then(response => response.blob())
     .then(blob => {
-      // 创建一个 File 对象
-      const file = new File([blob], imageUrl.split('/').pop(), { type: 'image/*' })
-      emit('upload-image', file)
-    })
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Data = e.target.result;
+        emit('upload-image', base64Data);
+      };
+      reader.readAsDataURL(blob);
+    });
 }
 
 // 修改执行代码的方法

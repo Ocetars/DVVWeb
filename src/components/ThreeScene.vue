@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
 import { Ground } from '@/components/utils/Ground.js'
 import { ElIcon } from 'element-plus'
-import { Refresh, DocumentChecked, Fold } from '@element-plus/icons-vue'
+import { VideoCamera, DocumentChecked, Fold } from '@element-plus/icons-vue'
 import { gsap } from 'gsap'
 
 const props = defineProps({
@@ -43,12 +43,12 @@ function updateGroundGeometry() {
 function handleImageUpload(file) {
   if (ground) {
     ground.handleImageUpload(file, (aspect) => {
-      // 将比例精确到小数点后两位
-      const roundedAspect = Math.round(aspect * 100) / 100
       // 根据当前 groundDepth 计算新的宽度，并通过事件通知父组件
-      emit('update-ground-dimensions', { groundWidth: props.groundDepth * roundedAspect })
-      updateGroundGeometry()
-    })
+      // 将计算结果精确到小数点后两位
+      const newWidth = Math.round(props.groundDepth * aspect * 100) / 100;
+      emit('update-ground-dimensions', { groundWidth: newWidth });
+      updateGroundGeometry();
+    });
   }
 }
 
@@ -206,7 +206,7 @@ function loadSceneTexture(url) {
 onMounted(() => {
   // 加载 OpenCV.js 脚本
   const script = document.createElement('script')
-  script.src = 'src/assets/opencv.js'
+  script.src = '/opencv.js'
   script.async = true
   script.onload = () => {
     console.log('OpenCV.js 加载完成')
@@ -342,7 +342,11 @@ defineExpose({
   enterCustomPositionMode,
   resetCamera,
   resetDronePosition,
-  loadSceneTexture
+  loadSceneTexture,
+  // 新增：获取默认纹理 Base64 数据
+  getDefaultTextureData() {
+    return ground.defaultTextureData;
+  }
 })
 </script>
 
@@ -357,7 +361,7 @@ defineExpose({
       <el-tooltip content="重置视角" placement="bottom">
         <div class="control-btn" @click="resetCamera">
           <el-icon :size="20">
-            <Refresh />
+            <VideoCamera />
           </el-icon>
         </div>
       </el-tooltip>
