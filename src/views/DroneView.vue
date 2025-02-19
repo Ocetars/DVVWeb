@@ -37,6 +37,9 @@ const authStore = useAuthStore()
 
 const { isSignedIn, user, isLoaded } = useUser()
 
+// 添加一个新的 ref 来控制按钮状态
+const isRefreshingScenes = ref(false)
+
 // 监听用户状态变化
 watch([isLoaded, isSignedIn, user], () => {
   if (isLoaded.value) {
@@ -64,7 +67,10 @@ const loadScenesAfterLogin = async () => {
         await sceneStore.fetchScenes()
       } catch (retryError) {
         console.log('第二次加载失败')
-        ElMessage.warning('场景加载失败，您可以手动更新场景')
+        ElMessage.error({
+          message: '同步场景列表失败，请检查国际网络环境',
+          offset: 100
+        })
       }
     }, 3000)
   }
@@ -200,33 +206,46 @@ onMounted(() => {
 // 修改：保存当前场景到 pinia store
 async function saveCurrentScene() {
   if (!authStore.isLoggedIn) {
-    ElMessage.warning('请先登录')
+    ElMessage.warning({
+      message: '登录账号以保存场景',
+      offset: 100
+    })
     return
   }
 
   // 在弹出对话框之前，确保 currentTexture 已赋值
   if (!currentTexture.value && threeScene.value && threeScene.value.getDefaultTextureData) {
-    // 如果没有手动上传纹理，则使用默认纹理的 Base64 数据
     currentTexture.value = threeScene.value.getDefaultTextureData() || '';
   }
 
+  // 生成默认场景名称
+  const defaultSceneName = `我的场景${sceneStore.scenes.length + 1}`
+
   // 弹出对话框，让用户输入场景名称
   try {
-    const sceneName = await ElMessageBox.prompt('请输入场景名称', '保存场景', {
-      confirmButtonText: '确定',
+    const { value: sceneName } = await ElMessageBox.prompt('', '保存场景', {
+      confirmButtonText: '保存',
       cancelButtonText: '取消',
-      inputPattern: /.+/, // 确保名称不为空
+      inputPattern: /.+/,
       inputErrorMessage: '场景名称不能为空',
+      inputValue: defaultSceneName,
+      customClass: 'scene-save-dialog',
+      inputPlaceholder: '  请输入场景名称',
+      roundButton: true,
+      // 自定义对话框样式
+      customStyle: {
+        padding: '20px',
+        borderRadius: '8px'
+      }
     })
 
-    if (sceneName.value) {
-      sceneStore.addScene({
-        name: sceneName.value, // 添加场景名称
+    if (sceneName) {
+      await sceneStore.addScene({
+        name: sceneName,
         groundWidth: groundWidth.value,
         groundDepth: groundDepth.value,
         texture: currentTexture.value
       })
-      // ElMessage.success('场景已保存')
     }
   } catch (error) {
     // 用户取消了输入
@@ -242,7 +261,10 @@ async function loadScene(scene) {
   groundWidth.value = scene.groundWidth
   groundDepth.value = scene.groundDepth
   threeScene.value.loadSceneTexture(scene.texture)
-  ElMessage.success('场景加载成功')
+  ElMessage.success({
+    message: '场景加载成功',
+    offset: 100
+  })
   savedScenesDrawerVisible.value = false
 }
 
@@ -259,21 +281,37 @@ async function handleDeleteScene(sceneId) {
       }
     )
     await sceneStore.removeScene(sceneId)
-    ElMessage.success('场景已删除')
+    ElMessage.success({
+      message: '场景已删除',
+      offset: 100
+    })
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除场景失败')
+      ElMessage.error({
+        message: '删除场景失败,您点击的太快了',
+        offset: 100
+      })
     }
   }
 }
 
-// 添加刷新场景列表的方法
+// 修改刷新场景列表的方法
 async function refreshScenes() {
+  if (isRefreshingScenes.value) return
+  
   try {
+    isRefreshingScenes.value = true
     await sceneStore.fetchScenes()
-    ElMessage.success('场景列表已更新')
   } catch (error) {
-    ElMessage.error('获取场景列表失败')
+    ElMessage.error({
+      message: '获取场景列表失败，请检查国际网络环境',
+      offset: 100
+    })
+  } finally {
+    // 3秒后重新启用按钮
+    setTimeout(() => {
+      isRefreshingScenes.value = false
+    }, 500)
   }
 }
 
@@ -338,7 +376,6 @@ function formatDate(dateString) {
 
     <!-- 场景管理器抽屉 -->
     <el-drawer
-      v-if="authStore.isLoggedIn"
       v-model="savedScenesDrawerVisible"
       title="已保存场景"
       :with-header="true"
@@ -349,13 +386,33 @@ function formatDate(dateString) {
       <template #header>
         <div class="drawer-header">
           <span>已保存场景</span>
-          <el-tooltip content="更新场景" placement="bottom" effect="dark">
-            <el-button class="refresh-btn" :icon="RefreshLeft" @click="refreshScenes" />
+          <el-tooltip v-if="authStore.isLoggedIn" content="更新场景" placement="bottom" effect="dark">
+            <el-button 
+              class="refresh-btn" 
+              :icon="RefreshLeft" 
+              @click="refreshScenes"
+              :disabled="isRefreshingScenes"
+              :loading="isRefreshingScenes"
+            />
           </el-tooltip>
         </div>
       </template>
-      <div class="scene-list">
+      
+      <!-- 未登录时显示提示信息 -->
+      <div v-if="!authStore.isLoggedIn" class="login-prompt">
+        <p>登录账号以启用此功能</p>
+      </div>
+      
+      <!-- 已登录时显示场景列表 -->
+      <div v-else class="scene-list">
+        <!-- 场景列表为空时显示提示 -->
+        <div v-if="!sceneStore.scenes.length" class="empty-scene-prompt">
+          <p>场景空空如也</p>
+        </div>
+        
+        <!-- 有场景时显示列表 -->
         <div 
+          v-else
           v-for="scene in sceneStore.scenes" 
           :key="scene.id" 
           class="scene-item"
@@ -448,7 +505,6 @@ function formatDate(dateString) {
 :deep(.el-drawer__close-btn:hover) {
   background-color: rgba(255, 255, 255, 0.1);
 }
-
 /* 添加浮动摄像头样式 */
 .floating-camera {
   position: absolute;
@@ -623,16 +679,6 @@ function formatDate(dateString) {
   opacity: 0.8; /* 当鼠标悬停时，轻微降低内容透明度 */
 }
 
-/* 添加抽屉头部样式 */
-/* .drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;                  
-  width: 100%;
-  padding: 0 20px;
-} */
-
 .refresh-btn {
   padding: 12px;
   font-size: 16px;
@@ -784,5 +830,23 @@ function formatDate(dateString) {
 
 .scene-created-at {
   color: #909399; /* 可以给时间设置一个不同的颜色 */
+}
+
+.login-prompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #909399;
+  font-size: 16px;
+}
+
+.empty-scene-prompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #909399;
+  font-size: 16px;
 }
 </style> 

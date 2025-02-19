@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  // baseURL: 'https://drone-pilot-backend.vercel.app/api', 
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'https://drone-pilot-backend.vercel.app/api', 
+  // baseURL: 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -49,6 +49,17 @@ export const deleteScene = async (sceneId) => {
     return response.data;
   } catch (error) {
     console.error('Error deleting scene:', error);
+    throw error;
+  }
+};
+
+// 健康检查接口
+export const checkHealth = async () => {
+  try {
+    const response = await apiClient.get('/health');
+    return response.data;
+  } catch (error) {
+    console.error('Health check failed:', error);
     throw error;
   }
 }; 

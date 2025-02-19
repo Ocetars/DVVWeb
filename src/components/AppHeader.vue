@@ -33,23 +33,47 @@ const handleSettingClick = () => {
 const updateDrawerVisible = (value) => {
   emit('update:drawerVisible', value)
 }
+
+// 添加提示显示状态
+const showTip = ref(true)
+
+// 关闭提示的方法
+const closeTip = () => {
+  showTip.value = false
+}
 </script>
 
 <template>
   <header class="header">
     <!-- Logo 区域 -->
-    <div class="logo-container">
-      <img :src="logoHeader" alt="DronePilot Logo" class="header-logo">
+    <div class="logo-section">
+      <div class="logo-container">
+        <img :src="logoHeader" alt="DronePilot Logo" class="header-logo">
+      </div>
+      
+      <!-- 修改: 可关闭的快速开始提示 -->
+      <SignedOut>
+        <a v-if="showTip"
+           href="https://dpw-docs.ocetars.top/guide/getting-started.html" 
+           target="_blank" 
+           class="quick-start-tip">
+          <div class="tip-content">
+            <GSymbol family="rounded" size="20" weight="400">tips_and_updates</GSymbol>
+            <span>初次使用？查看快速开始</span>
+          </div>
+          <button class="close-btn" @click.prevent="closeTip">
+            <GSymbol family="rounded" size="20" weight="300" class="close-icon">close</GSymbol>
+          </button>
+        </a>
+      </SignedOut>
     </div>
 
     <!-- 代码编辑器触发器 -->
     <div class="floating-trigger">
-      <el-tooltip content="打开代码编辑器" placement="bottom" effect="dark">
         <div class="trigger-button" @click="updateDrawerVisible(true)">
           <GSymbol class="code-icon">code</GSymbol>
           <span class="trigger-text">编辑代码</span>
         </div>
-      </el-tooltip>
     </div>
 
     <!-- 右侧图标按钮组 -->
@@ -273,11 +297,86 @@ const updateDrawerVisible = (value) => {
   .header-icon-btn {
     padding: 4px;
   }
+
+  .quick-start-tip {
+    padding: 6px;
+  }
+  
+  .quick-start-tip:hover {
+    padding-right: 24px;
+  }
+
+  .quick-start-tip span {
+    display: none;
+  }
 }
 
 .github-icon {
   font-size: 20px;
   width: 20px;
   height: 20px;
+}
+
+/* 新增样式 */
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.quick-start-tip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: #f0f9ff;
+  border-radius: 6px;
+  color: #1890ff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.tip-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.close-btn {
+  opacity: 0;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #1890ff;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5px;
+}
+
+.quick-start-tip:hover {
+  background-color: #e6f4ff;
+  padding-right: 18px;  /* 为关闭按钮留出空间 */
+}
+
+.quick-start-tip:hover .close-btn {
+  opacity: 1;
+}
+
+.quick-start-tip:hover .tip-content {
+  padding-right: 18px;  /* 为关闭按钮留出空间 */
+}
+
+.close-btn:hover {
+  background-color: #e6f4ff;
+  color: #0076e4;
 }
 </style> 
