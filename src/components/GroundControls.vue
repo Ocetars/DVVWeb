@@ -3,6 +3,7 @@
 import { ref, watch } from 'vue'
 import { ElUpload, ElInput, ElButton, ElIcon, ElDivider, ElPopover, ElMessage } from 'element-plus'
 import { UploadFilled, Pointer, VideoPlay, VideoPause } from '@element-plus/icons-vue'
+import GSymbol from './GSymbol.vue'
 
 const props = defineProps({
   groundWidth: {
@@ -105,6 +106,8 @@ function formatTime(seconds) {
   const remainingSeconds = seconds % 60
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }
+
+
 </script>
 
 <template>
@@ -123,8 +126,9 @@ function formatTime(seconds) {
           accept="image/*"
           :on-change="handleUpload"
         >
-          <el-button type="primary" :icon="UploadFilled">
-            上传地面纹理
+          <el-button type="primary" class="control-btn">
+            <GSymbol family="rounded" size="20" weight="400">add_photo_alternate</GSymbol>
+            <span class="label_black">&nbsp;上传地面纹理</span>
           </el-button>
         </el-upload>
       </template>
@@ -148,45 +152,40 @@ function formatTime(seconds) {
     <el-divider direction="vertical" />
 
     <div class="dimension-controls">
-      <div class="input-group">
-        <span class="label">地面横向宽度</span>
-        <el-input
-          v-model.number="localGroundWidth"
-          type="number"
-          :step="1"
-          @change="updateWidth"
-          :min="1"
-          class="dimension-input"
-        >
-          <template #suffix>m</template>
-        </el-input>
-      </div>
-
-      <div class="input-group">
-        <span class="label">地面纵向深度</span>
-        <el-input
-          v-model.number="localGroundDepth"
-          type="number"
-          :step="1"
-          @change="updateDepth"
-          :min="1"
-          class="dimension-input"
-        >
-          <template #suffix>m</template>
-        </el-input>
-      </div>
+      <span class="label">地面尺寸：</span>
+      <el-input
+        v-model.number="localGroundWidth"
+        type="number"
+        :step="1"
+        @change="updateWidth"
+        :min="1"
+        class="dimension-input"
+      >
+        <template #suffix>m</template>
+      </el-input>
+      <span class="multiply-symbol">×</span>
+      <el-input
+        v-model.number="localGroundDepth"
+        type="number"
+        :step="1"
+        @change="updateDepth"
+        :min="1"
+        class="dimension-input"
+      >
+        <template #suffix>m</template>
+      </el-input>
     </div>
 
     <el-divider direction="vertical" />
 
     <el-button
       type="primary" 
-      :icon="Pointer"
-      @click="handleCustomPosition"
-      class="position-btn"
+      class="position-btn control-btn"
       :class="{ 'positioning': isPositioning }"
+      @click="handleCustomPosition"
     >
-      {{ isPositioning ? '请点击地面' : '摆放无人机' }}
+      <GSymbol family="rounded" size="20" weight="400">location_on</GSymbol>
+      <span class="label_black">&nbsp;{{ isPositioning ? '请点击地面' : '摆放无人机' }}</span>
     </el-button>
 
     <el-divider direction="vertical" />
@@ -194,17 +193,22 @@ function formatTime(seconds) {
     <el-button 
       :type="timerRunning ? 'warning' : 'success'"
       round
-      :icon="timerRunning ? VideoPause : VideoPlay"
-      @click="handleExecuteCode"
-      class="execute-btn"
+      class="execute-btn control-btn"
       :class="{ 'running': timerRunning }"
+      @click="handleExecuteCode"
       size="large"
     >
+      <GSymbol 
+        family="rounded" 
+        size="24" 
+        weight="400"
+        :fill="timerRunning"
+      >{{ timerRunning ? 'stop_circle' : 'play_circle' }}</GSymbol>
       <div v-if="!timerRunning">
-        执行代码
+        &nbsp;&nbsp;开始模拟
       </div>
-      <div v-else>
-        {{ formatTime(elapsedTime) }}
+      <div v-else class="timer">
+        &nbsp;{{ formatTime(elapsedTime) }}
       </div>
     </el-button>
   </div>
@@ -222,30 +226,43 @@ function formatTime(seconds) {
 }
 
 .dimension-controls {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.input-group {
+  height: 32px;
   display: flex;
   align-items: center;
   gap: 8px;
+  /* background-color: #7575751a; */
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+.multiply-symbol {
+  color: #606266;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 2px;
 }
 
 .label {
-  font-size: 15px;
+  font-size: 16px;
   color: #606266;
   white-space: nowrap;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.label_black {
+  font-size: 15px;
+  color: #ffffff;
+  white-space: nowrap;
+  font-weight: 500;
 }
 
 .dimension-input {
-  width: 100px;
+  width: 80px;
 }
 
-/* 添加后缀样式 */
-:deep(.el-input__suffix) {
-  margin-left: 4px;
+.dimension-input :deep(.el-input__wrapper) {
+  background-color: white;
 }
 
 .position-btn {
@@ -385,6 +402,20 @@ function formatTime(seconds) {
   padding: 12px;
 }
 
+.control-btn {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  padding: 0 16px;
+}
+
+.control-btn :deep(.material-symbols) {
+  margin-top: -2px;
+  font-size: 20px;
+}
+
 .execute-btn {
   min-width: 120px;
   height: 40px;
@@ -392,6 +423,14 @@ function formatTime(seconds) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.execute-btn :deep(.material-symbols) {
+  font-size: 24px;
 }
 
 .execute-btn:not(.running) {
@@ -420,6 +459,13 @@ function formatTime(seconds) {
   box-shadow: 0 2px 8px rgba(230, 162, 60, 0.3);
 }
 
+.timer {
+  font-size: 18px;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
 @keyframes gentle-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(230, 162, 60, 0.4);
@@ -434,13 +480,7 @@ function formatTime(seconds) {
 
 /* 修改图标过渡效果 */
 :deep(.el-icon) {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-right: 6px;
-  transform-origin: center;
-}
-
-.execute-btn:hover :deep(.el-icon) {
-  transform: scale(1.3);
+  display: none;
 }
 
 /* 添加运行状态下的图标特效 */
@@ -482,6 +522,19 @@ function formatTime(seconds) {
   100% {
     transform: scale(1.1);
     opacity: 1.3;
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .control-btn {
+    gap: 8px;
+    padding: 0 12px;
+  }
+  
+  .execute-btn {
+    gap: 10px;
+    padding: 0 16px;
   }
 }
 </style> 

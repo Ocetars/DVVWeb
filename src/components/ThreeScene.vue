@@ -4,8 +4,6 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Drone } from '@/components/utils/drone.js'
 import { Ground } from '@/components/utils/Ground.js'
-import { ElIcon } from 'element-plus'
-import { VideoCamera, DocumentChecked, Fold } from '@element-plus/icons-vue'
 import { gsap } from 'gsap'
 
 const props = defineProps({
@@ -158,7 +156,7 @@ function resetCamera() {
   distance = Math.max(distance, minDistance);
 
     // 调整高度，避免相机过于接近水平面
-    const heightFactor = 1.2; // 可以根据需要调整
+    const heightFactor = 2; // 可以根据需要调整
     const height = boundingSphereRadius * heightFactor;
 
   // 相机目标位置（地面中心）
@@ -360,25 +358,19 @@ defineExpose({
     <div class="control-buttons">
       <el-tooltip content="重置视角" placement="bottom">
         <div class="control-btn" @click="resetCamera">
-          <el-icon :size="20">
-            <VideoCamera />
-          </el-icon>
+          <GSymbol>center_focus_weak</GSymbol>
         </div>
       </el-tooltip>
       
       <el-tooltip content="保存场景" placement="bottom">
         <div class="control-btn" @click="$emit('save-scene')">
-          <el-icon :size="20">
-            <DocumentChecked />
-          </el-icon>
+          <GSymbol>save</GSymbol>
         </div>
       </el-tooltip>
       
-      <el-tooltip content="加载场景" placement="bottom">
+      <el-tooltip content="我的场景" placement="bottom">
         <div class="control-btn" @click="$emit('load-scene')">
-          <el-icon :size="20">
-            <Fold />
-          </el-icon>
+          <GSymbol size="24">sort</GSymbol>
         </div>
       </el-tooltip>
     </div>
@@ -403,7 +395,7 @@ defineExpose({
 .control-buttons {
   position: absolute;
   top: 20px;
-  right: 30px;
+  right: 50px;
   display: flex;
   flex-direction: row;
   gap:10px;
@@ -413,7 +405,7 @@ defineExpose({
 .control-btn {
   width: 40px;
   height: 40px;
-  background-color: rgba(150, 150, 150, 0.7);
+  background-color: rgba(150, 150, 150, 0.228);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -423,7 +415,7 @@ defineExpose({
 }
 
 .control-btn:hover {
-  background-color: rgba(101, 101, 101, 0.9);
+  background-color: rgba(101, 101, 101, 0.425);
 }
 
 .custom-position-mode {

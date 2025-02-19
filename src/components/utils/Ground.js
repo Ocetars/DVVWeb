@@ -13,10 +13,10 @@ export class Ground {
     this.init();
   }
 
-  // 获取默认纹理，从 '/textures/Logo_orgin.png' 加载默认纹理
+  // 获取默认纹理
   getDefaultTexture() {
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load('/textures/Logo_orgin.png', (loadedTexture) => {
+    const texture = textureLoader.load('/textures/BlackGold.png', (loadedTexture) => {
       if (loadedTexture.image) {
         // 利用 canvas 将加载的图片转换为 Base64 数据
         const canvas = document.createElement('canvas');
