@@ -59,7 +59,7 @@ const updateDrawerVisible = (value) => {
            class="quick-start-tip">
           <div class="tip-content">
             <GSymbol family="rounded" size="20" weight="400">tips_and_updates</GSymbol>
-            <span>初次使用？查看快速开始</span>
+            <span>初次使用？</span>
           </div>
           <button class="close-btn" @click.prevent="closeTip">
             <GSymbol family="rounded" size="20" weight="300" class="close-icon">close</GSymbol>

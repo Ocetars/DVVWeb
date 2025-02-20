@@ -237,7 +237,7 @@ function loadSceneTexture(url) {
 
 // 添加加载进度事件处理函数
 const handleLoadingProgress = (event) => {
-  console.log('加载进度:', event.detail.progress) // 添加日志
+  // console.log('加载进度:', event.detail.progress) // 添加日志
   isLoading.value = true
   loadingProgress.value = event.detail.progress
 }
