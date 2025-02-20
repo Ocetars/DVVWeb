@@ -29,6 +29,9 @@ const isCustomPositionMode = ref(false)
 const showPositionHint = ref(false)
 // 添加一个变量来控制代码执行状态
 const isCodeRunning = ref(false)
+// 在 script setup 中添加状态
+const isLoading = ref(false)
+const loadingProgress = ref(0)
 
 // 更新地面几何体（使用 props 中的 groundWidth、groundDepth）
 function updateGroundGeometry() {
@@ -232,7 +235,29 @@ function loadSceneTexture(url) {
   })
 }
 
+// 添加加载进度事件处理函数
+const handleLoadingProgress = (event) => {
+  console.log('加载进度:', event.detail.progress) // 添加日志
+  isLoading.value = true
+  loadingProgress.value = event.detail.progress
+}
+
+const handleLoadingComplete = () => {
+  isLoading.value = false
+  loadingProgress.value = 100
+}
+
+const handleLoadingError = () => {
+  console.log('加载错误') // 添加日志
+  isLoading.value = false
+}
+
 onMounted(() => {
+  // 添加事件监听（移到最前面，确保在创建无人机之前就开始监听）
+  window.addEventListener('droneLoadingProgress', handleLoadingProgress)
+  window.addEventListener('droneLoadingComplete', handleLoadingComplete)
+  window.addEventListener('droneLoadingError', handleLoadingError)
+
   // 加载 OpenCV.js 脚本
   const script = document.createElement('script')
   script.src = '/opencv.js'
@@ -279,7 +304,7 @@ onMounted(() => {
   camera.position.set(0, 3, 0)
   camera.lookAt(0, 0, 0)
 
-  // 初始化无人机
+  // 初始化无人机（确保在添加事件监听之后再创建无人机）
   drone = new Drone(scene)
   if (bottomCameraContainer.value) {
     // 等待无人机摄像头加载完成后附加摄像头元素
@@ -361,6 +386,10 @@ onBeforeUnmount(() => {
   container.value.removeChild(renderer.domElement)
   // 移除地面点击事件监听器
   renderer.domElement.removeEventListener('click', handleGroundClick);
+  // 移除事件监听
+  window.removeEventListener('droneLoadingProgress', handleLoadingProgress)
+  window.removeEventListener('droneLoadingComplete', handleLoadingComplete)
+  window.removeEventListener('droneLoadingError', handleLoadingError)
 })
 
 watch(() => props.groundWidth, () => {
@@ -391,6 +420,16 @@ defineExpose({
     class="scene-container"
     :class="{ 'custom-position-mode': isCustomPositionMode }"
   >
+    <!-- 加载进度显示 -->
+    <div v-if="isLoading" class="loading-progress-container">
+      <div class="loading-progress-wrapper">
+        <div class="loading-progress-bar">
+          <div class="progress-fill" :style="{ width: loadingProgress + '%' }"></div>
+        </div>
+        <span class="progress-text">模型加载中 {{ Math.round(loadingProgress) }}%</span>
+      </div>
+    </div>
+
     <!-- 控制按钮组 -->
     <div class="control-buttons">
       <el-tooltip content="重置视角" placement="bottom">
@@ -489,6 +528,64 @@ defineExpose({
   100% {
     opacity: 0;
     transform: translate(-50%, -50%);
+  }
+}
+
+/* 加载进度样式 */
+.loading-progress-container {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-progress-wrapper {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(8px);
+}
+
+.loading-progress-bar {
+  width: 140px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #67c23a);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 14px;
+  color: #1f1f1f;
+  white-space: nowrap;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .loading-progress-wrapper {
+    padding: 6px 12px;
+  }
+  
+  .loading-progress-bar {
+    width: 120px;
+  }
+  
+  .progress-text {
+    font-size: 12px;
   }
 }
 </style>

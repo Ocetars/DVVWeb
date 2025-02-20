@@ -18,38 +18,13 @@ defineProps({
 // 使用 defineEmits 来声明自定义事件
 const emit = defineEmits(['update:drawerVisible'])
 
-// 添加加载进度相关的状态
-const isLoading = ref(false)
-const loadingProgress = ref(0)
+// 添加提示显示状态
+const showTip = ref(true)
 
-// 监听加载进度事件
-const handleLoadingProgress = (event) => {
-  isLoading.value = true
-  loadingProgress.value = event.detail.progress
+// 关闭提示的方法
+const closeTip = () => {
+  showTip.value = false
 }
-
-const handleLoadingComplete = () => {
-  isLoading.value = false
-  loadingProgress.value = 100
-}
-
-const handleLoadingError = () => {
-  isLoading.value = false
-}
-
-// 在组件挂载时添加事件监听
-onMounted(() => {
-  window.addEventListener('droneLoadingProgress', handleLoadingProgress)
-  window.addEventListener('droneLoadingComplete', handleLoadingComplete)
-  window.addEventListener('droneLoadingError', handleLoadingError)
-})
-
-// 在组件卸载时移除事件监听
-onUnmounted(() => {
-  window.removeEventListener('droneLoadingProgress', handleLoadingProgress)
-  window.removeEventListener('droneLoadingComplete', handleLoadingComplete)
-  window.removeEventListener('droneLoadingError', handleLoadingError)
-})
 
 // 添加处理函数
 const handleDocClick = () => {
@@ -65,14 +40,6 @@ const handleSettingClick = () => {
 // 更新 drawerVisible 的值
 const updateDrawerVisible = (value) => {
   emit('update:drawerVisible', value)
-}
-
-// 添加提示显示状态
-const showTip = ref(true)
-
-// 关闭提示的方法
-const closeTip = () => {
-  showTip.value = false
 }
 </script>
 
@@ -107,16 +74,6 @@ const closeTip = () => {
           <GSymbol class="code-icon">code</GSymbol>
           <span class="trigger-text">编辑代码</span>
         </div>
-    </div>
-
-    <!-- 加载进度显示 -->
-    <div v-if="isLoading" class="loading-progress-container">
-      <div class="loading-progress-wrapper">
-        <div class="loading-progress-bar">
-          <div class="progress-fill" :style="{ width: loadingProgress + '%' }"></div>
-        </div>
-        <span class="progress-text">模型加载中 {{ Math.round(loadingProgress) }}%</span>
-      </div>
     </div>
 
     <!-- 右侧图标按钮组 -->
@@ -422,68 +379,5 @@ const closeTip = () => {
 .close-btn:hover {
   background-color: #e6f4ff;
   color: #0076e4;
-}
-
-/* 修改加载进度样式 */
-.loading-progress-container {
-  position: absolute;
-  left: calc(50% + 120px); /* 向右偏移，远离编辑代码按钮 */
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-progress-wrapper {
-  background: #f5f7fa;
-  padding: 6px 12px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.loading-progress-bar {
-  width: 120px; /* 稍微缩小进度条宽度 */
-  height: 3px;
-  background: #e4e7ed;
-  border-radius: 1.5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #409eff, #67c23a);
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 11px;
-  color: #606266;
-  margin-top: 1px;
-  white-space: nowrap;
-}
-
-/* 调整响应式布局 */
-@media (max-width: 1024px) {
-  .loading-progress-container {
-    left: calc(50% + 80px);
-  }
-  
-  .loading-progress-wrapper {
-    padding: 4px 8px;
-  }
-  
-  .loading-progress-bar {
-    width: 100px;
-  }
-  
-  .progress-text {
-    font-size: 10px;
-  }
 }
 </style> 

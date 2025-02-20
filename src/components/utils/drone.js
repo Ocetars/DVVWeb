@@ -89,7 +89,7 @@ export class Drone {
             (progress) => {
                 const percentage = (progress.loaded / progress.total * 100);
                 this.updateLoadingProgress(percentage);
-                console.log('加载进度:', percentage + '%');
+                // console.log('加载进度:', percentage + '%');
             },
             (error) => {
                 console.error('模型加载出错:', error);
