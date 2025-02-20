@@ -243,13 +243,21 @@ const handleLoadingProgress = (event) => {
 }
 
 const handleLoadingComplete = () => {
-  isLoading.value = false
+  console.log('模型加载完成') // 添加日志
+  // 确保先显示100%，然后再隐藏进度条
   loadingProgress.value = 100
+  // 延迟隐藏进度条，给用户时间看到100%
+  setTimeout(() => {
+    isLoading.value = false
+  }, 800)
 }
 
 const handleLoadingError = () => {
   console.log('加载错误') // 添加日志
-  isLoading.value = false
+  // 在错误时也延迟隐藏进度条
+  setTimeout(() => {
+    isLoading.value = false
+  }, 800)
 }
 
 onMounted(() => {

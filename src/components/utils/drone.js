@@ -29,12 +29,22 @@ export class Drone {
 
     loadModel() {
         const loader = new GLTFLoader();
-        // 在加载开始时触发进度事件
-        this.updateLoadingProgress(0);
         
+        // 添加延迟加载机制
+        let artificialProgress = 0;
+        const progressInterval = setInterval(() => {
+            if (artificialProgress < 98) { // 改为98，留出空间给最终加载完成
+                artificialProgress += 2;
+                this.updateLoadingProgress(artificialProgress);
+            } else {
+                clearInterval(progressInterval);
+            }
+        }, 100);
+
         loader.load(
             '/dji_phantom_4_animation/scene.gltf',
             (gltf) => {
+                clearInterval(progressInterval);
                 const model = gltf.scene;
                 // 调整模型大小和位置
                 model.scale.set(1, 1, 1);
@@ -83,18 +93,41 @@ export class Drone {
                 }
                 // console.log('动画列表:', animations);
 
-                // 加载完成时触发100%进度
-                this.updateLoadingProgress(100);
+                // 确保最后平滑过渡到100%
+                if (artificialProgress < 100) {
+                    const remainingProgress = 100 - artificialProgress;
+                    const steps = 5; // 分5步完成剩余进度
+                    let currentStep = 0;
+                    
+                    const finalInterval = setInterval(() => {
+                        currentStep++;
+                        const progress = artificialProgress + (remainingProgress * currentStep / steps);
+                        this.updateLoadingProgress(progress);
+                        
+                        if (currentStep >= steps) {
+                            clearInterval(finalInterval);
+                            // 最后触发完成事件
+                            setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('droneLoadingComplete'));
+                            }, 200);
+                        }
+                    }, 100);
+                } else {
+                    // 如果已经到达100%，直接触发完成事件
+                    window.dispatchEvent(new CustomEvent('droneLoadingComplete'));
+                }
             },
             (progress) => {
-                const percentage = (progress.loaded / progress.total * 100);
-                this.updateLoadingProgress(percentage);
-                // console.log('加载进度:', percentage + '%');
+                // 使用实际加载进度和人工进度的较大值
+                const realProgress = (progress.loaded / progress.total) * 100;
+                artificialProgress = Math.max(artificialProgress, realProgress);
             },
             (error) => {
+                clearInterval(progressInterval);
                 console.error('模型加载出错:', error);
-                // 发送加载错误事件
-                window.dispatchEvent(new CustomEvent('droneLoadingError', { detail: { error } }));
+                window.dispatchEvent(new CustomEvent('droneLoadingError', { 
+                    detail: { error: error.message } 
+                }));
             }
         );
     }
