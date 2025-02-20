@@ -148,21 +148,47 @@ function resetCamera() {
   const boundingSphereRadius = boundingBox.getBoundingSphere(new THREE.Sphere()).radius;
 
   // 计算相机到包围球中心的距离，基于包围球半径和相机的视野
-  const fov = camera.fov * (Math.PI / 180); // 将视角转换为弧度
+  const fov = camera.fov * (Math.PI / 180);
   let distance = boundingSphereRadius / Math.sin(fov / 2);
 
   // 限制最小距离，避免相机过于接近地面
-  const minDistance = boundingSphereRadius * 0.1; // 可以根据需要调整
+  const minDistance = boundingSphereRadius * 0.1;
   distance = Math.max(distance, minDistance);
 
-    // 调整高度，避免相机过于接近水平面
-    const heightFactor = 2; // 可以根据需要调整
-    const height = boundingSphereRadius * heightFactor;
+  // 调整高度，避免相机过于接近水平面
+  const heightFactor = 2;
+  const height = boundingSphereRadius * heightFactor;
 
   // 相机目标位置（地面中心）
   const targetLookAt = new THREE.Vector3(0, 0, 0);
 
+  // 创建一个对象来存储 controls.target 的当前位置
+  const currentTarget = controls.target.clone();
+  
+  // 获取当前相机的四元数
+  const startQuaternion = camera.quaternion.clone();
+  // 计算目标四元数
+  const endPosition = new THREE.Vector3(targetLookAt.x, targetLookAt.y + height * 0.6, targetLookAt.z + distance * 0.6);
+  const endQuaternion = new THREE.Quaternion();
+  const lookAtMatrix = new THREE.Matrix4();
+  lookAtMatrix.lookAt(endPosition, targetLookAt, new THREE.Vector3(0, 1, 0));
+  endQuaternion.setFromRotationMatrix(lookAtMatrix);
+
   // 使用 GSAP 创建平滑动画
+  gsap.to(currentTarget, {
+    x: targetLookAt.x,
+    y: targetLookAt.y,
+    z: targetLookAt.z,
+    duration: 1,
+    ease: "power2.inOut",
+    onUpdate: () => {
+      controls.target.copy(currentTarget);
+      controls.update();
+    }
+  });
+
+  // 创建一个用于插值的对象
+  const rotationProxy = { t: 0 };
   gsap.to(camera.position, {
     x: targetLookAt.x,
     y: targetLookAt.y + height * 0.6,
@@ -170,13 +196,18 @@ function resetCamera() {
     duration: 1,
     ease: "power2.inOut",
     onUpdate: () => {
-      camera.lookAt(targetLookAt);
-    },
-    onComplete: () => {
-      // 更新控制器
-      controls.target.copy(targetLookAt);
-      controls.update();
+      // 使用四元数进行平滑插值
+      const quaternion = new THREE.Quaternion();
+      quaternion.slerpQuaternions(startQuaternion, endQuaternion, rotationProxy.t);
+      camera.quaternion.copy(quaternion);
     }
+  });
+
+  // 同步旋转动画
+  gsap.to(rotationProxy, {
+    t: 1,
+    duration: 1,
+    ease: "power2.inOut"
   });
 }
 
@@ -223,6 +254,12 @@ onMounted(() => {
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.05
+  // 添加极角限制，防止视角过低或过高
+  controls.minPolarAngle = Math.PI * 0.01; // 约10度
+  controls.maxPolarAngle = Math.PI * 0.6; // (0.5是90度)
+  // 添加平滑插值
+  controls.enableSmooth = true;
+  controls.smoothTime = 0.5;
 
   // 添加灯光
   // 增加环境光强度，使用白色

@@ -8,11 +8,30 @@ export class Drone {
         this.scene = scene;
         this.movement = new DroneMovement();
         this.camera = null;
+        this.isLoading = true;
+        // 创建自定义事件
+        this.loadingProgressEvent = new CustomEvent('droneLoadingProgress', {
+            detail: { progress: 0 }
+        });
+        this.loadingCompleteEvent = new CustomEvent('droneLoadingComplete');
         this.loadModel();
+    }
+
+    // 更新加载进度
+    updateLoadingProgress(progress) {
+        this.loadingProgressEvent.detail.progress = progress;
+        window.dispatchEvent(this.loadingProgressEvent);
+        if (progress >= 100) {
+            this.isLoading = false;
+            window.dispatchEvent(this.loadingCompleteEvent);
+        }
     }
 
     loadModel() {
         const loader = new GLTFLoader();
+        // 在加载开始时触发进度事件
+        this.updateLoadingProgress(0);
+        
         loader.load(
             '/dji_phantom_4_animation/scene.gltf',
             (gltf) => {
@@ -59,16 +78,23 @@ export class Drone {
                         action.setDuration(1);
                         action.timeScale = 0;
                         action.play();
-                        console.log('播放动画:', clip.name);
+                        // console.log('播放动画:', clip.name);
                     });
                 }
-                console.log('动画列表:', animations);
+                // console.log('动画列表:', animations);
+
+                // 加载完成时触发100%进度
+                this.updateLoadingProgress(100);
             },
             (progress) => {
-                console.log('加载进度:', (progress.loaded / progress.total * 100) + '%');
+                const percentage = (progress.loaded / progress.total * 100);
+                this.updateLoadingProgress(percentage);
+                console.log('加载进度:', percentage + '%');
             },
             (error) => {
                 console.error('模型加载出错:', error);
+                // 发送加载错误事件
+                window.dispatchEvent(new CustomEvent('droneLoadingError', { detail: { error } }));
             }
         );
     }
