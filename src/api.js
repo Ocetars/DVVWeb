@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'https://drone-pilot-backend.vercel.app/api', 
+  baseURL: 'https://dpw-backend.ocetars.top/api', 
   // baseURL: 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
@@ -10,13 +10,17 @@ const apiClient = axios.create({
 
 // 添加请求拦截器
 apiClient.interceptors.request.use(async (config) => {
-  // 从 Clerk 获取 token
-  const token = await window.Clerk.session?.getToken();
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  try {
+    // 检查 Clerk 是否已初始化
+    if (window.Clerk?.session) {
+      const token = await window.Clerk.session.getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get Clerk token:', error);
   }
-  
   return config;
 });
 

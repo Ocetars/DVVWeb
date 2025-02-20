@@ -1,10 +1,9 @@
 <!-- GroundControls 的工作只是收集用户的输入，然后通过事件传递给父组件或 ThreeScene，让 ThreeScene 根据最新的参数更新场景。 -->
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { ElUpload, ElInput, ElButton, ElIcon, ElDivider, ElPopover, ElMessage } from 'element-plus'
-import { UploadFilled, Pointer, VideoPlay, VideoPause } from '@element-plus/icons-vue'
+import { ElUpload, ElInput, ElButton,ElDivider, ElPopover} from 'element-plus'
 import GSymbol from './GSymbol.vue'
-import { checkHealth } from '../api'
+import NetworkStatus from './NetworkStatus.vue'
 
 const props = defineProps({
   groundWidth: {
@@ -43,8 +42,6 @@ const emit = defineEmits([
 const localGroundWidth = ref(props.groundWidth)
 const localGroundDepth = ref(props.groundDepth)
 const isPositioning = ref(false)
-const networkStatus = ref('ok')
-const lastCheckTime = ref(null)
 
 // 添加预设地面纹理数据
 const presetGrounds = [
@@ -110,58 +107,11 @@ function formatTime(seconds) {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
-// 添加健康检查函数
-async function checkNetworkStatus() {
-  try {
-    const response = await checkHealth()
-    networkStatus.value = response.status
-    lastCheckTime.value = response.timestamp
-  } catch (error) {
-    networkStatus.value = 'error'
-    console.error('Network check failed:', error)
-  }
-}
-
-// 设置定期检查
-let healthCheckInterval
-onMounted(() => {
-  checkNetworkStatus() // 初始检查
-  healthCheckInterval = setInterval(checkNetworkStatus, 3000) // 每30秒检查一次
-})
-
-onUnmounted(() => {
-  if (healthCheckInterval) {
-    clearInterval(healthCheckInterval)
-  }
-})
-
 </script>
 
 <template>
   <div class="ground-controls">
-    <div class="network-status" :class="networkStatus">
-      <el-popover
-        placement="top"
-        trigger="hover"
-        :width="200"
-      >
-        <template #reference>
-          <div class="status-indicator">
-            <GSymbol 
-              family="rounded" 
-              size="20" 
-              weight="400"
-            >{{ networkStatus === 'ok' ? 'cloud_done' : 'cloud_off' }}</GSymbol>
-            <span class="status-text">{{ networkStatus === 'ok' ? '后端服务连接正常' : '后端服务无法连接，请检查您的国际网络环境' }}</span>
-          </div>
-        </template>
-        <div class="status-details">
-          <p>后端服务状态: {{ networkStatus === 'ok' ? '正常' : '异常' }}</p>
-          <p v-if="lastCheckTime">最后检查: {{ new Date(lastCheckTime).toLocaleTimeString() }}</p>
-        </div>
-      </el-popover>
-    </div>
-
+    <NetworkStatus />
     <el-divider direction="vertical" />
 
     <el-popover
@@ -587,64 +537,6 @@ onUnmounted(() => {
   .execute-btn {
     gap: 10px;
     padding: 0 16px;
-  }
-}
-
-.network-status {
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  height: 32px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  min-width: fit-content;
-}
-
-.network-status.ok {
-  color: #67C23A;
-}
-
-.network-status.error {
-  color: #F56C6C;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.status-text {
-  font-size: 14px;
-  font-weight: 500;
-  min-width: max-content;
-}
-
-.status-details {
-  font-size: 14px;
-  width: 100%;
-}
-
-.status-details p {
-  margin: 8px 0;
-  color: #606266;
-  word-break: break-all;
-  white-space: normal;
-  line-height: 1.4;
-}
-
-/* 添加响应式布局支持 */
-@media (max-width: 768px) {
-  .network-status {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  
-  .status-indicator {
-    width: 100%;
-    justify-content: flex-start;
   }
 }
 </style> 
