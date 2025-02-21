@@ -31,8 +31,8 @@ async function loadExampleFromFile(filename) {
 
 // 示例代码配置
 const examples = [
-  { label: '画正方形', value: 'Square.js' },
-  { label: '追踪红色圆', value: 'Red_or_Square.js' }
+  { label: '原地画正方形', value: 'draw_square.js' },
+  { label: '追踪红色圆', value: 'Red_or_Square.js' },
 ]
 
 async function loadTemplate(template) {
