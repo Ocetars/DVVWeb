@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 export class Ground {
-  constructor(scene, width = 2, depth = 2) {
+  constructor(scene, width = 4, depth = 4) {
     this.scene = scene;
     this.width = width;
     this.depth = depth;

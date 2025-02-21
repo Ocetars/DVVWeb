@@ -1,11 +1,11 @@
-import * as THREE from 'three';
-
 export class DroneMovement {
   constructor() {
     this.model = null;
     // 当前运动命令，格式: { hover: boolean, angle: number, speed: number, altitude: number }
     // 默认命令为悬停（水平无运动），高度稍后在加载模型时初始化
     this.command = { hover: true, angle: 0, speed: 0, altitude: 0 };
+    // 添加当前实际角度属性
+    this.currentAngle = 0;
   }
 
   // 新增方法：设置加载后的无人机模型
@@ -36,16 +36,29 @@ export class DroneMovement {
     const cmd = this.command || { hover: true, angle: 0, speed: 0, altitude: this.model.position.y };
 
     if (!cmd.hover) {
-      // 计算水平运动：将极坐标（angle, speed）转换为笛卡尔坐标
-      const dx = Math.cos(cmd.angle) * cmd.speed * delta;
-      const dz = Math.sin(cmd.angle) * cmd.speed * delta;
+      // 平滑过渡到目标角度
+      const angleDiff = cmd.angle - this.currentAngle;
+      // 处理角度跨越360度的情况
+      if (angleDiff > Math.PI) {
+        this.currentAngle += Math.PI * 2;
+      } else if (angleDiff < -Math.PI) {
+        this.currentAngle -= Math.PI * 2;
+      }
+      // 使用线性插值实现平滑转向
+      const rotationSpeed = 2.0; // 调整该值可以改变转向速度
+      this.currentAngle += (cmd.angle - this.currentAngle) * rotationSpeed * delta;
+
+      // 使用实际当前角度计算移动
+      const dx = Math.cos(this.currentAngle) * cmd.speed * delta;
+      const dz = Math.sin(this.currentAngle) * cmd.speed * delta;
       this.model.position.x += dx;
       this.model.position.z += dz;
     }
+    
     // 平滑调整高度到目标 altitude（垂直运动）
     const currentY = this.model.position.y;
     const targetY = cmd.altitude;
-    const lerpFactor = 0.2 * delta; // 高度调整速率
+    const lerpFactor = 0.4 * delta; // 高度调整速率
     this.model.position.y = currentY + (targetY - currentY) * lerpFactor;
   }
 } 

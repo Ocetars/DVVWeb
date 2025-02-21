@@ -8,11 +8,11 @@ import NetworkStatus from './NetworkStatus.vue'
 const props = defineProps({
   groundWidth: {
     type: Number,
-    default: 2
+    default: 4
   },
   groundDepth: {
     type: Number,
-    default: 2
+    default: 4
   },
   isCustomPositionMode: {
     type: Boolean,
@@ -45,9 +45,8 @@ const isPositioning = ref(false)
 
 // 添加预设地面纹理数据
 const presetGrounds = [
-  { name: '草地', image: '/textures/grass.jpg' },
-  { name: '2022B', image: '/textures/2022B.png' },
-  { name: '木地板', image: '/textures/wood.jpg' },
+  { name: '比赛场地', image: '/textures/比赛场地.png' },
+  { name: '无人机', image: '/textures/uavroom.jpg' },
 ]
 
 watch(() => props.groundWidth, (newVal) => {
@@ -95,6 +94,7 @@ function selectPresetGround(imageUrl) {
 function handleExecuteCode() {
   if (props.timerRunning) {
     emit('stop-code')
+    window.startTime = null
   } else {
     emit('execute-code')
   }
@@ -136,7 +136,7 @@ function formatTime(seconds) {
       </template>
       
       <div class="preset-grounds-container">
-        <div class="preset-grounds-title">预设地面</div>
+        <div class="preset-grounds-title">预设地面纹理</div>
         <div class="preset-grounds">
           <div 
             v-for="ground in presetGrounds" 
@@ -359,7 +359,7 @@ function formatTime(seconds) {
 }
 
 .preset-grounds-container {
-  padding: 5px;
+  padding: 0px;
 }
 
 .preset-grounds-title {
@@ -372,8 +372,8 @@ function formatTime(seconds) {
 
 .preset-grounds {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);  /* 改为3列 */
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr); 
+  /* gap: 5px; */
 }
 
 .preset-ground-item {
@@ -382,8 +382,8 @@ function formatTime(seconds) {
 }
 
 .preset-ground-item img {
-  width: 70px;
-  height: 70px;
+  width: 90px;
+  height: 60px;
   object-fit: cover;
   border-radius: 4px;
   margin-bottom: 4px;

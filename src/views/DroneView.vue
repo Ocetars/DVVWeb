@@ -11,8 +11,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { Delete, RefreshLeft } from '@element-plus/icons-vue'
 import { useUser } from '@clerk/vue'
 
-const groundWidth = ref(2)
-const groundDepth = ref(2)
+const groundWidth = ref(4)
+const groundDepth = ref(4)
 const threeScene = ref(null)
 const cvOutputContainer = ref(null)
 

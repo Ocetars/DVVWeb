@@ -348,7 +348,7 @@ const updateDrawerVisible = (value) => {
 .close-btn {
   opacity: 0;
   position: absolute;
-  right: 4px;
+  right: 5px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
@@ -365,7 +365,7 @@ const updateDrawerVisible = (value) => {
 
 .quick-start-tip:hover {
   background-color: #e6f4ff;
-  padding-right: 18px;  /* 为关闭按钮留出空间 */
+  padding-right: 10px;  /* 为关闭按钮留出空间 */
 }
 
 .quick-start-tip:hover .close-btn {

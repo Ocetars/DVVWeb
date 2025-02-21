@@ -5,7 +5,7 @@ export class DroneCamera {
     this.scene = scene;
     this.targetModel = targetModel; // 无人机模型引用
     // 创建底部摄像头及其渲染器
-    this.bottomCamera = new THREE.PerspectiveCamera(60, 1, 0.01, 1000);
+    this.bottomCamera = new THREE.PerspectiveCamera(90, 1, 0.01, 1000);
     this.bottomCameraRenderer = new THREE.WebGLRenderer({ antialias: true });
     this.bottomCameraRenderer.setSize(240, 240);
   }

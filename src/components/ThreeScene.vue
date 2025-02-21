@@ -309,7 +309,7 @@ onMounted(() => {
   // scene.add(fillLight)
 
   // 设置相机位置
-  camera.position.set(0, 3, 0)
+  camera.position.set(0, 6, 0)
   camera.lookAt(0, 0, 0)
 
   // 初始化无人机（确保在添加事件监听之后再创建无人机）
